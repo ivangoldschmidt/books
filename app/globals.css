@@ -422,3 +422,25 @@ h2 { font-family:Georgia,serif; font-size:clamp(2rem,4vw,3.3rem); margin:0; lett
   [data-theme='dark'] .mobile-menu { background:#22201e !important; }
   .mobile-menu-head,.mobile-profile,.mobile-nav,.mobile-menu-foot { position:relative; z-index:1; }
 }
+
+/* Navegação final e cartões consistentes */
+.mobile-home { display:none; }
+.numbers-grid .numbers-link {
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+  box-shadow:var(--shadow);
+  min-height:130px;
+}
+@media(max-width:900px){
+  .mobile-home { display:grid; flex:0 0 auto; }
+  .brand { min-width:0; margin-right:auto; }
+  .brand { white-space:nowrap; }
+}
+@media(max-width:420px){
+  .nav { gap:8px; }
+  .brand { font-size:1rem; gap:7px; }
+  .brand-mark { width:34px; height:34px; }
+  .icon-btn { width:42px; height:42px; flex:0 0 42px; }
+}

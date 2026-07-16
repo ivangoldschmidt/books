@@ -59,7 +59,7 @@ export function BookCard({
           <button
             className="add-btn"
             onClick={() => setOpen(true)}
-            aria-label="Adicionar à biblioteca"
+            aria-label="Adicionar à estante"
           >
             <Plus />
           </button>

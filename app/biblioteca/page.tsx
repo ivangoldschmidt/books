@@ -155,7 +155,7 @@ function Content() {
       <div className="section-head">
         <div>
           <div className="eyebrow">Sua coleção</div>
-          <h1>Biblioteca</h1>
+          <h1>Estante</h1>
         </div>
         <div className="category-create">
           <input

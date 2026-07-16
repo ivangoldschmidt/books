@@ -70,7 +70,7 @@ export default function ManualBookPage() {
       <label>Série<input value={form.series} onChange={event => update('series', event.target.value)} /></label>
       <label>Adicionar em<select value={status} onChange={event => setStatus(event.target.value as ShelfStatus)}>{Object.entries(shelfLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
       {status === 'read' && <label>Quantas vezes foi lido?<input type="number" min="0" value={readCount} onChange={event => setReadCount(Math.max(0, Number(event.target.value) || 0))} /></label>}
-      <div className="wide"><button className="primary-btn" disabled={busy}><BookPlus size={18} />{busy ? 'Adicionando…' : 'Adicionar à biblioteca'}</button></div>
+      <div className="wide"><button className="primary-btn" disabled={busy}><BookPlus size={18} />{busy ? 'Adicionando…' : 'Adicionar à estante'}</button></div>
     </form>
     {message && <p className="success-message">{message}</p>}{error && <p className="form-error">{error}</p>}
   </main>;

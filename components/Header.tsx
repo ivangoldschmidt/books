@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { BarChart3, BookPlus, Library, LogIn, LogOut, Menu, Moon, Search, Sparkles, Sun, X } from 'lucide-react';
+import { BarChart3, BookPlus, Home, Library, LogIn, LogOut, Menu, Moon, Search, Sparkles, Sun, X } from 'lucide-react';
 import { useEffect,useState } from 'react';
 import {createClient} from '@/lib/supabase-browser';
 
@@ -8,7 +8,7 @@ type Profile={name:string;avatar?:string};
 const links=[
   {href:'/buscar',label:'Buscar',icon:Search},
   {href:'/adicionar-manualmente',label:'Adicionar',icon:BookPlus},
-  {href:'/biblioteca',label:'Biblioteca',icon:Library},
+  {href:'/biblioteca',label:'Estante',icon:Library},
   {href:'/dashboard',label:'Dashboard',icon:BarChart3},
   {href:'/recomendacoes',label:'IA',icon:Sparkles},
 ];
@@ -21,9 +21,10 @@ export function Header(){
   const toggle=()=>{const n=!dark;setDark(n);document.documentElement.dataset.theme=n?'dark':'light';localStorage.setItem('theme',n?'dark':'light')};
   async function logout(){await createClient().auth.signOut();location.href='/'}
   return <header className="header"><div className="container nav">
-    <Link href="/" className="brand" onClick={()=>setOpen(false)}><span className="brand-mark">M</span> Minha Estante</Link>
-    <nav className="nav-links" aria-label="Navegação principal">{links.map(({href,label,icon:Icon})=><Link key={href} href={href}><Icon size={16}/>{label}</Link>)}</nav>
+    <Link href="/biblioteca" className="brand" onClick={()=>setOpen(false)}><span className="brand-mark">M</span> Minha Estante</Link>
+    <nav className="nav-links" aria-label="Navegação principal"><Link href="/" aria-label="Página inicial"><Home size={16}/>Início</Link>{links.map(({href,label,icon:Icon})=><Link key={href} href={href}><Icon size={16}/>{label}</Link>)}</nav>
     {profile&&<Link href="/perfil" className="user-chip desktop-user"><span className="avatar-shell">{profile.avatar?<img src={profile.avatar} alt="" referrerPolicy="no-referrer"/>:<b>{profile.name.slice(0,1).toUpperCase()}</b>}</span><strong>{profile.name}</strong></Link>}
+    <Link className="icon-btn mobile-home" href="/" aria-label="Página inicial"><Home size={19}/></Link>
     <button className="icon-btn" onClick={toggle} aria-label={dark?'Ativar modo claro':'Ativar modo escuro'}>{dark?<Sun size={19}/>:<Moon size={19}/>}</button>
     {profile?<button className="icon-btn desktop-auth" onClick={logout} aria-label="Sair"><LogOut size={19}/></button>:<Link className="icon-btn desktop-auth" href="/login" aria-label="Entrar"><LogIn size={19}/></Link>}
     <button className="icon-btn menu-toggle" onClick={()=>setOpen(true)} aria-label="Abrir menu" aria-expanded={open}><Menu size={21}/></button>

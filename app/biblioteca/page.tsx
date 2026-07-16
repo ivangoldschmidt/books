@@ -1,7 +1,236 @@
 'use client';
-import {BookCard}from'@/components/BookCard';import{StarRating}from'@/components/StarRating';import{createClient}from'@/lib/supabase-browser';import type{LibraryItem,ShelfStatus,CustomCategory}from'@/lib/types';import{shelfLabels,normalize}from'@/lib/utils';import{Suspense,useEffect,useMemo,useState}from'react';import{useSearchParams}from'next/navigation';import{FolderPlus,Trash2}from'lucide-react';
-type Group='none'|'author'|'genre'|'country'|'language'|'year'|'series'|'publisher';
-const groupNames:Record<Group,string>={none:'Sem agrupamento',author:'Autor',genre:'Gênero',country:'País do autor',language:'Idioma',year:'Ano de publicação',series:'Série',publisher:'Editora'};
-function Content(){const p=useSearchParams();const[filter,setFilter]=useState<ShelfStatus|'all'>((p.get('status')as ShelfStatus)||'all');const[items,setItems]=useState<LibraryItem[]>([]);const[cats,setCats]=useState<CustomCategory[]>([]);const[selectedCat,setSelectedCat]=useState('all');const[group,setGroup]=useState<Group>('none');const[newCat,setNewCat]=useState('');const[loading,setLoading]=useState(true);async function load(){const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const[{data:i},{data:c}]=await Promise.all([s.from('library_items').select('*,library_item_categories(category_id)').order('updated_at',{ascending:false}),s.from('custom_categories').select('*').order('name')]);setItems((i||[])as unknown as LibraryItem[]);setCats((c||[])as CustomCategory[]);setLoading(false)}useEffect(()=>{void load()},[]);async function createCat(){const name=newCat.trim();if(!name)return;const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user)return;await s.from('custom_categories').insert({user_id:user.id,name});setNewCat('');await load()}async function remove(item:LibraryItem){if(!confirm(`Remover “${item.book.title}”?`))return;await createClient().from('library_items').delete().eq('id',item.id);await load()}async function rate(item:LibraryItem,rating:number){await createClient().from('library_items').update({rating,updated_at:new Date().toISOString()}).eq('id',item.id);setItems(v=>v.map(x=>x.id===item.id?{...x,rating}:x))}async function reread(item:LibraryItem){const now=new Date().toISOString(),count=item.read_count+1;const s=createClient();await s.from('library_items').update({read_count:count,status:'read',finished_at:now,updated_at:now}).eq('id',item.id);await s.from('reading_history').insert({user_id:item.user_id,library_item_id:item.id,event_type:'reread',occurred_at:now});await load()}
-const visible=useMemo(()=>items.filter((x:any)=>(filter==='all'||x.status===filter)&&(selectedCat==='all'||x.library_item_categories?.some((j:any)=>j.category_id===selectedCat))),[items,filter,selectedCat]);function keys(i:LibraryItem){const b=i.book;switch(group){case'author':return b.authors.length?b.authors:['Autor desconhecido'];case'genre':return b.genres?.length?b.genres:['Não informado'];case'country':return b.authorCountries?.length?b.authorCountries:['Não informado'];case'language':return[normalize(b.language)];case'year':return[normalize(b.publishedYear)];case'series':return[normalize(b.series)];case'publisher':return[normalize(b.publisher)];default:return['Todos']}}const grouped=useMemo(()=>{const m=new Map<string,LibraryItem[]>();visible.forEach(i=>keys(i).forEach(k=>m.set(k,[...(m.get(k)||[]),i])));return[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]))},[visible,group]);return <main className="container section"><div className="section-head"><div><div className="eyebrow">Sua coleção</div><h1>Biblioteca</h1></div><div className="category-create"><input value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Nova categoria"/><button className="primary-btn" onClick={createCat}><FolderPlus size={17}/>Criar</button></div></div><div className="controls"><select value={filter} onChange={e=>setFilter(e.target.value as any)}><option value="all">Todos ({items.length})</option>{Object.entries(shelfLabels).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select><select value={selectedCat} onChange={e=>setSelectedCat(e.target.value)}><option value="all">Todas as categorias</option>{cats.map(c=><option value={c.id} key={c.id}>{c.name}</option>)}</select><select value={group} onChange={e=>setGroup(e.target.value as Group)}>{Object.entries(groupNames).map(([k,v])=><option key={k} value={k}>Agrupar: {v}</option>)}</select></div>{loading?<div className="empty">Carregando…</div>:visible.length?grouped.map(([name,list])=><section className="book-group" key={name}><h2>{group==='none'?'Todos os livros':`${name} (${list.length})`}</h2><div className="grid">{list.map(item=><div className="library-item" key={`${name}-${item.id}`}><BookCard book={item.book} readCount={item.read_count} showAddButton={false}/><StarRating value={item.rating} onChange={r=>rate(item,r)}/><div className="library-card-actions">{item.status==='read'&&<button className="secondary-btn" onClick={()=>reread(item)}>Li novamente</button>}<button className="danger-btn" onClick={()=>remove(item)}><Trash2 size={16}/>Remover</button></div></div>)}</div></section>):<div className="empty">Nenhum livro nesta seção.</div>}</main>}
-export default function Page(){return <Suspense><Content/></Suspense>}
+
+import { BookCard } from '@/components/BookCard';
+import { StarRating } from '@/components/StarRating';
+import { createClient } from '@/lib/supabase-browser';
+import type { CustomCategory, LibraryItem, ShelfStatus } from '@/lib/types';
+import { normalize, shelfLabels } from '@/lib/utils';
+import { FolderPlus, Heart, Trash2, X } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+
+type Group = 'none' | 'author' | 'genre' | 'country' | 'language' | 'year' | 'series' | 'publisher';
+type SpecialFilter = 'all' | 'favorites';
+
+const groupNames: Record<Group, string> = {
+  none: 'Sem agrupamento',
+  author: 'Autor',
+  genre: 'Gênero',
+  country: 'País do autor',
+  language: 'Idioma',
+  year: 'Ano de publicação',
+  series: 'Série',
+  publisher: 'Editora',
+};
+
+function Content() {
+  const params = useSearchParams();
+  const [filter, setFilter] = useState<ShelfStatus | 'all'>((params.get('status') as ShelfStatus) || 'all');
+  const [specialFilter, setSpecialFilter] = useState<SpecialFilter>('all');
+  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [categories, setCategories] = useState<CustomCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [group, setGroup] = useState<Group>('none');
+  const [newCategory, setNewCategory] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function load() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      location.href = '/login';
+      return;
+    }
+
+    const [{ data: itemData, error: itemError }, { data: categoryData, error: categoryError }] = await Promise.all([
+      supabase.from('library_items').select('*,library_item_categories(category_id)').order('updated_at', { ascending: false }),
+      supabase.from('custom_categories').select('*').order('name'),
+    ]);
+
+    if (itemError || categoryError) setError(itemError?.message || categoryError?.message || 'Não foi possível carregar a biblioteca.');
+    setItems((itemData || []) as unknown as LibraryItem[]);
+    setCategories((categoryData || []) as CustomCategory[]);
+    setLoading(false);
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  async function createCategory() {
+    const name = newCategory.trim();
+    if (!name) return;
+    setError('');
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error: insertError } = await supabase.from('custom_categories').insert({ user_id: user.id, name });
+    if (insertError) {
+      setError(insertError.code === '23505' ? 'Você já possui uma categoria com esse nome.' : insertError.message);
+      return;
+    }
+    setNewCategory('');
+    await load();
+  }
+
+  async function deleteCategory(category: CustomCategory) {
+    if (!confirm(`Excluir a categoria “${category.name}”? Os livros não serão removidos da biblioteca.`)) return;
+    const { error: deleteError } = await createClient().from('custom_categories').delete().eq('id', category.id);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    if (selectedCategory === category.id) setSelectedCategory('all');
+    await load();
+  }
+
+  async function removeBook(item: LibraryItem) {
+    if (!confirm(`Remover “${item.book.title}” da biblioteca?`)) return;
+    const { error: deleteError } = await createClient().from('library_items').delete().eq('id', item.id);
+    if (deleteError) setError(deleteError.message);
+    else await load();
+  }
+
+  async function rate(item: LibraryItem, rating: number) {
+    const { error: ratingError } = await createClient()
+      .from('library_items')
+      .update({ rating, updated_at: new Date().toISOString() })
+      .eq('id', item.id);
+    if (ratingError) setError(ratingError.message);
+    else setItems(current => current.map(entry => entry.id === item.id ? { ...entry, rating } : entry));
+  }
+
+  async function toggleFavorite(item: LibraryItem) {
+    const next = !item.is_favorite;
+    const { error: favoriteError } = await createClient()
+      .from('library_items')
+      .update({ is_favorite: next, updated_at: new Date().toISOString() })
+      .eq('id', item.id);
+    if (favoriteError) setError(favoriteError.message);
+    else setItems(current => current.map(entry => entry.id === item.id ? { ...entry, is_favorite: next } : entry));
+  }
+
+  async function reread(item: LibraryItem) {
+    const now = new Date().toISOString();
+    const count = item.read_count + 1;
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from('library_items')
+      .update({ read_count: count, status: 'read', finished_at: now, updated_at: now })
+      .eq('id', item.id);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    await supabase.from('reading_history').insert({
+      user_id: item.user_id,
+      library_item_id: item.id,
+      event_type: 'reread',
+      occurred_at: now,
+    });
+    await load();
+  }
+
+  const visible = useMemo(() => items.filter((item: any) => {
+    const matchesShelf = filter === 'all' || item.status === filter;
+    const matchesFavorite = specialFilter !== 'favorites' || item.is_favorite;
+    const matchesCategory = selectedCategory === 'all' || item.library_item_categories?.some((join: any) => join.category_id === selectedCategory);
+    return matchesShelf && matchesFavorite && matchesCategory;
+  }), [items, filter, specialFilter, selectedCategory]);
+
+  function groupKeys(item: LibraryItem) {
+    const book = item.book;
+    switch (group) {
+      case 'author': return book.authors.length ? book.authors : ['Autor desconhecido'];
+      case 'genre': return book.genres?.length ? book.genres : ['Não informado'];
+      case 'country': return book.authorCountries?.length ? book.authorCountries : ['Não informado'];
+      case 'language': return [normalize(book.language)];
+      case 'year': return [normalize(book.publishedYear)];
+      case 'series': return [normalize(book.series)];
+      case 'publisher': return [normalize(book.publisher)];
+      default: return ['Todos'];
+    }
+  }
+
+  const grouped = useMemo(() => {
+    const result = new Map<string, LibraryItem[]>();
+    visible.forEach(item => groupKeys(item).forEach(key => result.set(key, [...(result.get(key) || []), item])));
+    return [...result.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [visible, group]);
+
+  const favoritesCount = items.filter(item => item.is_favorite).length;
+
+  return (
+    <main className="container section">
+      <div className="section-head">
+        <div>
+          <div className="eyebrow">Sua coleção</div>
+          <h1>Biblioteca</h1>
+        </div>
+        <div className="category-create">
+          <input
+            value={newCategory}
+            onChange={event => setNewCategory(event.target.value)}
+            onKeyDown={event => { if (event.key === 'Enter') void createCategory(); }}
+            placeholder="Nova categoria"
+            maxLength={50}
+          />
+          <button className="primary-btn" onClick={createCategory}><FolderPlus size={17} />Criar</button>
+        </div>
+      </div>
+
+      <div className="library-filters" aria-label="Filtros da biblioteca">
+        <button className={`filter-pill ${specialFilter === 'all' ? 'active' : ''}`} onClick={() => setSpecialFilter('all')}>Todos ({items.length})</button>
+        <button className={`filter-pill favorite-filter ${specialFilter === 'favorites' ? 'active' : ''}`} onClick={() => setSpecialFilter('favorites')}>
+          <Heart size={17} fill={specialFilter === 'favorites' ? 'currentColor' : 'none'} /> Favoritos ({favoritesCount})
+        </button>
+        {categories.map(category => (
+          <span className={`category-pill ${selectedCategory === category.id ? 'active' : ''}`} key={category.id}>
+            <button onClick={() => setSelectedCategory(selectedCategory === category.id ? 'all' : category.id)}>{category.name}</button>
+            <button className="category-delete" onClick={() => deleteCategory(category)} aria-label={`Excluir categoria ${category.name}`} title="Excluir categoria"><X size={15} /></button>
+          </span>
+        ))}
+      </div>
+
+      <div className="controls">
+        <select value={filter} onChange={event => setFilter(event.target.value as ShelfStatus | 'all')}>
+          <option value="all">Todas as estantes</option>
+          {Object.entries(shelfLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+        </select>
+        <select value={group} onChange={event => setGroup(event.target.value as Group)}>
+          {Object.entries(groupNames).map(([key, label]) => <option key={key} value={key}>Agrupar: {label}</option>)}
+        </select>
+      </div>
+
+      {error && <p className="form-error">{error}</p>}
+
+      {loading ? <div className="empty">Carregando…</div> : visible.length ? grouped.map(([name, list]) => (
+        <section className="book-group" key={name}>
+          <h2>{group === 'none' ? 'Todos os livros' : `${name} (${list.length})`}</h2>
+          <div className="grid">
+            {list.map(item => (
+              <div className="library-item" key={`${name}-${item.id}`}>
+                <BookCard
+                  book={item.book}
+                  readCount={item.read_count}
+                  showAddButton={false}
+                  showFavoriteButton
+                  favorite={item.is_favorite}
+                  onToggleFavorite={() => toggleFavorite(item)}
+                />
+                <StarRating value={item.rating} onChange={rating => rate(item, rating)} />
+                <div className="library-card-actions">
+                  {item.status === 'read' && <button className="secondary-btn" onClick={() => reread(item)}>Li novamente</button>}
+                  <button className="danger-btn" onClick={() => removeBook(item)}><Trash2 size={16} />Remover</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )) : <div className="empty">Nenhum livro nesta seção.</div>}
+    </main>
+  );
+}
+
+export default function Page() {
+  return <Suspense><Content /></Suspense>;
+}

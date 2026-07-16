@@ -45,3 +45,12 @@ npm install
 npm run dev
 npm run build
 ```
+
+## Atualização: favoritos e remoção de categorias
+
+Depois de atualizar os arquivos, execute novamente `supabase/schema.sql` no SQL Editor do Supabase. O script adiciona a coluna `is_favorite` sem apagar os livros existentes.
+
+- Favoritos fica sempre visível na biblioteca.
+- Clique no coração da capa para adicionar ou remover um livro dos favoritos.
+- As categorias criadas ficam visíveis como botões.
+- Clique no `×` da categoria para excluí-la. A exclusão da categoria não remove os livros.

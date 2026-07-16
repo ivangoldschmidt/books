@@ -9,7 +9,7 @@ import { FormEvent, useState } from 'react';
 export default function ManualBookPage() {
   const [form, setForm] = useState({ title: '', authors: '', description: '', coverUrl: '', publishedYear: '', language: '', isbn: '', genres: '', country: '', publisher: '', series: '' });
   const [status, setStatus] = useState<ShelfStatus>('want');
-  const [readCount, setReadCount] = useState(1);
+  const [readCount, setReadCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -43,7 +43,7 @@ export default function ManualBookPage() {
       user_id: user.id,
       book_key: bookKey(book),
       status,
-      read_count: status === 'read' ? Math.max(1, readCount) : 1,
+      read_count: Math.max(0, readCount),
       book,
       finished_at: status === 'read' ? now : null,
       updated_at: now,
@@ -69,7 +69,7 @@ export default function ManualBookPage() {
       <label>País(es) do autor<input value={form.country} onChange={event => update('country', event.target.value)} placeholder="Separe por vírgula" /></label>
       <label>Série<input value={form.series} onChange={event => update('series', event.target.value)} /></label>
       <label>Adicionar em<select value={status} onChange={event => setStatus(event.target.value as ShelfStatus)}>{Object.entries(shelfLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
-      {status === 'read' && <label>Quantas vezes foi lido?<input type="number" min="1" value={readCount} onChange={event => setReadCount(Math.max(1, Number(event.target.value) || 1))} /></label>}
+      {status === 'read' && <label>Quantas vezes foi lido?<input type="number" min="0" value={readCount} onChange={event => setReadCount(Math.max(0, Number(event.target.value) || 0))} /></label>}
       <div className="wide"><button className="primary-btn" disabled={busy}><BookPlus size={18} />{busy ? 'Adicionando…' : 'Adicionar à biblioteca'}</button></div>
     </form>
     {message && <p className="success-message">{message}</p>}{error && <p className="form-error">{error}</p>}

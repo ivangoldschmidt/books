@@ -26,11 +26,11 @@ const groupNames: Record<Group, string> = {
 function Content() {
   const params = useSearchParams();
   const [filter, setFilter] = useState<ShelfStatus | 'all'>((params.get('status') as ShelfStatus) || 'all');
-  const [specialFilter, setSpecialFilter] = useState<SpecialFilter>('all');
+  const [specialFilter, setSpecialFilter] = useState<SpecialFilter>(params.get('view') === 'favorites' ? 'favorites' : 'all');
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [categories, setCategories] = useState<CustomCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [group, setGroup] = useState<Group>('none');
+  const [group, setGroup] = useState<Group>((params.get('group') as Group) || 'none');
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -49,7 +49,9 @@ function Content() {
     ]);
 
     if (itemError || categoryError) setError(itemError?.message || categoryError?.message || 'Não foi possível carregar a biblioteca.');
-    setItems((itemData || []) as unknown as LibraryItem[]);
+    const rawItems = (itemData || []) as unknown as LibraryItem[];
+    const deduped = Array.from(new Map(rawItems.map(entry => [entry.book_key, entry])).values());
+    setItems(deduped);
     setCategories((categoryData || []) as CustomCategory[]);
     setLoading(false);
   }
@@ -111,7 +113,7 @@ function Content() {
 
   async function finishReading(item: LibraryItem) {
     const now = new Date().toISOString();
-    const nextCount = Math.max(1, item.read_count || 0) + 1;
+    const nextCount = Math.max(0, item.read_count || 0) + 1;
     const { error: finishError } = await createClient().from('library_items').update({
       status: 'read', read_count: nextCount, finished_at: now, updated_at: now,
     }).eq('id', item.id);

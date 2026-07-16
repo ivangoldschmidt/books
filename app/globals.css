@@ -92,3 +92,9 @@ h2 { font-family:Georgia,serif; font-size:clamp(2rem,4vw,3.3rem); margin:0; lett
 .toast { position:fixed; right:20px; bottom:20px; z-index:100; background:var(--text); color:var(--bg); padding:13px 17px; border-radius:14px; box-shadow:var(--shadow); }
 @media(max-width:900px){ .hero{grid-template-columns:1fr; padding-top:48px}.book-art{min-height:280px}.grid{grid-template-columns:repeat(3,1fr)}.detail{grid-template-columns:210px 1fr}.nav-links{display:none} }
 @media(max-width:620px){ .container{width:min(100% - 22px,1180px)}.nav{height:64px}.hero{padding-top:38px;gap:10px;min-height:auto}.book-art{min-height:230px}.stats{grid-template-columns:1fr;gap:10px}.grid{grid-template-columns:repeat(2,1fr);gap:14px}.modal-actions{grid-template-columns:1fr}.detail{grid-template-columns:1fr}.detail-cover{width:180px}.viewer{min-height:520px}.search-bar{position:sticky;top:72px;z-index:20}.section-head{align-items:start;flex-direction:column} }
+.library-card-actions { display:grid; gap:9px; margin-top:9px; }
+.library-card-actions .secondary-btn, .library-card-actions .danger-btn { width:100%; }
+.danger-btn { border-radius:14px; padding:12px 17px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid color-mix(in srgb, #c83a55 45%, var(--border)); background:color-mix(in srgb, #c83a55 10%, var(--surface)); color:#d94a65; }
+.danger-btn:hover { background:color-mix(in srgb, #c83a55 18%, var(--surface)); }
+.danger-btn:disabled { opacity:.55; cursor:not-allowed; }
+.form-error { color:#e44b68; line-height:1.45; }

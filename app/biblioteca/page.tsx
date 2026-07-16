@@ -6,6 +6,7 @@ import type { LibraryItem, ShelfStatus } from '@/lib/types';
 import { shelfLabels } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 
 function LibraryContent() {
   const params = useSearchParams();
@@ -13,6 +14,8 @@ function LibraryContent() {
   const [filter, setFilter] = useState<ShelfStatus | 'all'>(initial);
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   async function load() {
     const supabase = createClient();
@@ -53,6 +56,30 @@ function LibraryContent() {
     await load();
   }
 
+
+  async function removeItem(item: LibraryItem) {
+    const confirmed = window.confirm(`Remover “${item.book.title}” da sua biblioteca?`);
+    if (!confirmed) return;
+
+    setRemovingId(item.id);
+    setError('');
+
+    const supabase = createClient();
+    const { error: deleteError } = await supabase
+      .from('library_items')
+      .delete()
+      .eq('id', item.id);
+
+    if (deleteError) {
+      setError(deleteError.message);
+      setRemovingId(null);
+      return;
+    }
+
+    setItems((current) => current.filter((currentItem) => currentItem.id !== item.id));
+    setRemovingId(null);
+  }
+
   return (
     <main className="container section">
       <div className="section-head">
@@ -80,22 +107,34 @@ function LibraryContent() {
         ))}
       </div>
 
+      {error && <div className="form-error" style={{ marginTop: 18 }}>{error}</div>}
+
       {loading ? (
         <div className="empty">Carregando…</div>
       ) : visible.length ? (
         <div className="grid" style={{ marginTop: 24 }}>
           {visible.map((item) => (
             <div key={item.id}>
-              <BookCard book={item.book} readCount={item.read_count} />
-              {item.status === 'read' && (
+              <BookCard book={item.book} readCount={item.read_count} showAddButton={false} />
+              <div className="library-card-actions">
+                {item.status === 'read' && (
+                  <button
+                    className="secondary-btn"
+                    onClick={() => increment(item)}
+                  >
+                    Li novamente
+                  </button>
+                )}
                 <button
-                  className="secondary-btn"
-                  style={{ width: '100%', marginTop: 9 }}
-                  onClick={() => increment(item)}
+                  className="danger-btn"
+                  onClick={() => removeItem(item)}
+                  disabled={removingId === item.id}
+                  aria-label={`Remover ${item.book.title} da biblioteca`}
                 >
-                  Li novamente
+                  <Trash2 size={17} />
+                  {removingId === item.id ? 'Removendo…' : 'Remover'}
                 </button>
-              )}
+              </div>
             </div>
           ))}
         </div>

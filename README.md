@@ -1,53 +1,47 @@
-# Minha Estante
+# Minha Estante v2
 
-Web app responsivo de biblioteca pessoal com visual inspirado nas imagens de referência, usando bordô no lugar do laranja/salmão.
+Biblioteca pessoal responsiva em Next.js 15, Supabase, Google Books/Open Library/Gutendex/Internet Archive e recomendações com Gemini.
 
 ## Recursos
-
-- Login por Google ou e-mail/senha com Supabase Auth.
-- Estantes **Já li**, **Lendo agora** e **Quero ler**.
-- Contadores clicáveis no overview, abrindo a biblioteca já filtrada.
-- Busca agregada com uma única tentativa em cada fonte: Google Books, Open Library, Gutendex e Internet Archive.
-- Capa, título, autor, descrição, ano, idioma e link da fonte quando disponíveis.
-- Clique na capa para abrir os detalhes; clique no botão `+` para escolher a estante.
-- Google Books Embedded Viewer para volumes com prévia incorporável.
-- Contador “Li novamente”; a capa recebe tag apenas a partir da segunda leitura.
-- Temas claro e escuro e layout responsivo para desktop e smartphone.
+- Login Google e e-mail/senha.
+- Já li, Lendo agora e Quero ler.
+- Categorias personalizadas ilimitadas.
+- Agrupamento automático por autor, gênero, país do autor, idioma, ano, série e editora.
+- Notas de 1 a 5 estrelas, releituras e remoção.
+- Página de autor, histórico, dashboard, perfil e “Minha biblioteca em números”.
+- IA para sugerir os próximos livros.
+- Dark/light e layout desktop/mobile.
 
 ## 1. Supabase
+Crie um projeto e execute **todo** o arquivo `supabase/schema.sql` no SQL Editor. Ele é idempotente e também atualiza uma instalação anterior.
 
-1. Crie um projeto no Supabase.
-2. Abra o SQL Editor, cole e execute `supabase/schema.sql`.
-3. Em **Authentication > Providers**, ative Email e Google.
-4. No Google Cloud, configure as credenciais OAuth e use a URL de callback mostrada pelo Supabase.
-5. Em **Authentication > URL Configuration**, adicione:
-   - `http://localhost:3000/auth/callback`
-   - `https://SEU-DOMINIO.vercel.app/auth/callback`
+Em Authentication habilite Email e Google. No Google Cloud, a redirect URI deve ser:
+`https://SEU-PROJETO.supabase.co/auth/v1/callback`
 
-## 2. Variáveis de ambiente
+No Supabase > Authentication > URL Configuration:
+- Site URL: seu domínio principal da Vercel
+- Redirect URL: `https://seu-dominio.vercel.app/auth/callback`
 
-Copie `.env.example` para `.env.local`:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_ANON
-GOOGLE_BOOKS_API_KEY=SUA_CHAVE_OPCIONAL
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+## 2. Variáveis na Vercel
+Cadastre em Settings > Environment Variables (Production, Preview e Development):
 ```
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_SITE_URL=https://seu-dominio.vercel.app
+GOOGLE_BOOKS_API_KEY=...
+GEMINI_API_KEY=...
+```
+A chave Gemini é criada no Google AI Studio. O código usa `gemini-3-flash-preview`; caso o modelo deixe de estar disponível, altere o nome em `app/api/recommend/route.ts` para um modelo Flash liberado no seu projeto.
 
-A chave do Google Books é opcional, mas recomendada para cota mais previsível.
+## 3. GitHub/Vercel
+Envie o conteúdo da pasta para um repositório, importe na Vercel e faça Deploy. Depois de alterar variáveis, faça Redeploy sem cache.
 
-## 3. Rodar localmente
+## Observações de dados
+As APIs nem sempre fornecem país do autor, gênero, série ou editora. Nesses casos o agrupamento usa “Não informado”. Novos livros pesquisados pelo Google Books costumam possuir metadados mais completos.
 
-```bash
+## Local
+```
 npm install
 npm run dev
+npm run build
 ```
-
-## 4. Publicar
-
-Envie a pasta ao GitHub, importe o repositório na Vercel e cadastre as mesmas variáveis de ambiente. O preset Next.js é detectado automaticamente.
-
-## Observações
-
-“Todas as APIs disponíveis” não é um conjunto finito. Este projeto já integra quatro fontes públicas relevantes e isolou os adaptadores em `app/api/books/search/route.ts`, facilitando acrescentar outras. Cada busca faz no máximo uma requisição por fonte e combina/deduplica os resultados.

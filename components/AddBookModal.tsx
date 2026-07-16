@@ -1,21 +1,3 @@
 'use client';
-import type { Book, ShelfStatus } from '@/lib/types';
-import { bookKey, shelfLabels } from '@/lib/utils';
-import { createClient } from '@/lib/supabase-browser';
-import { useState } from 'react';
-
-export function AddBookModal({book,onClose,onSaved}:{book:Book;onClose:()=>void;onSaved?:()=>void}){
-  const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  async function save(status:ShelfStatus){
-    setBusy(true); setError(''); const supabase=createClient(); const {data:{user}}=await supabase.auth.getUser();
-    if(!user){ location.href='/login'; return; }
-    const payload={user_id:user.id,book_key:bookKey(book),status,book,updated_at:new Date().toISOString()};
-    const {error}=await supabase.from('library_items').upsert(payload,{onConflict:'user_id,book_key'});
-    if(error){setError(error.message);setBusy(false);return;} onSaved?.(); onClose();
-  }
-  return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal" onMouseDown={e=>e.stopPropagation()}>
-    <h2>Adicionar à estante</h2><p className="muted">{book.title}</p>
-    <div className="modal-actions">{(['read','reading','want'] as ShelfStatus[]).map(s=><button disabled={busy} key={s} className="secondary-btn" onClick={()=>save(s)}>{shelfLabels[s]}</button>)}</div>
-    {error&&<p style={{color:'crimson'}}>{error}</p>}<button className="secondary-btn" style={{marginTop:16}} onClick={onClose}>Cancelar</button>
-  </div></div>
-}
+import type{Book,ShelfStatus,CustomCategory}from'@/lib/types';import{bookKey,shelfLabels}from'@/lib/utils';import{createClient}from'@/lib/supabase-browser';import{useEffect,useState}from'react';
+export function AddBookModal({book,onClose,onSaved}:{book:Book;onClose:()=>void;onSaved?:()=>void}){const[busy,setBusy]=useState(false),[error,setError]=useState(''),[cats,setCats]=useState<CustomCategory[]>([]),[selected,setSelected]=useState<string[]>([]);useEffect(()=>{createClient().from('custom_categories').select('*').order('name').then(({data})=>setCats((data||[])as CustomCategory[]))},[]);async function save(status:ShelfStatus){setBusy(true);setError('');const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const now=new Date().toISOString();const{data:item,error:e}=await s.from('library_items').upsert({user_id:user.id,book_key:bookKey(book),status,book,updated_at:now,finished_at:status==='read'?now:null},{onConflict:'user_id,book_key'}).select('id').single();if(e){setError(e.message);setBusy(false);return}if(selected.length&&item)await s.from('library_item_categories').upsert(selected.map(category_id=>({library_item_id:item.id,category_id})));onSaved?.();onClose()}return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal" onMouseDown={e=>e.stopPropagation()}><h2>Adicionar à estante</h2><p className="muted">{book.title}</p><div className="modal-actions">{(['read','reading','want']as ShelfStatus[]).map(x=><button disabled={busy} key={x} className="secondary-btn" onClick={()=>save(x)}>{shelfLabels[x]}</button>)}</div>{cats.length>0&&<><h3>Categorias opcionais</h3><div className="chip-list">{cats.map(c=><button type="button" className={`chip ${selected.includes(c.id)?'active':''}`} key={c.id} onClick={()=>setSelected(v=>v.includes(c.id)?v.filter(x=>x!==c.id):[...v,c.id])}>{c.name}</button>)}</div></>}{error&&<p className="form-error">{error}</p>}<button className="secondary-btn" onClick={onClose}>Cancelar</button></div></div>}

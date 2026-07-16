@@ -52,7 +52,7 @@ export function BookCard({
         {book.title}
       </div>
       <div className="book-meta">
-        {book.authors.join(', ') || 'Autor desconhecido'}
+        {book.authors.length ? book.authors.map((a,i)=><span key={a}>{i?', ':''}<Link href={`/autor/${encodeURIComponent(a)}`}>{a}</Link></span>) : 'Autor desconhecido'}
         {book.publishedYear ? ` · ${book.publishedYear}` : ''}
       </div>
 

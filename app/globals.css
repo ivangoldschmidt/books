@@ -297,3 +297,60 @@ h2 { font-family:Georgia,serif; font-size:clamp(2rem,4vw,3.3rem); margin:0; lett
   .manual-form .wide { grid-column:auto; }
   .detail-shelf-actions { display:grid; grid-template-columns:1fr; }
 }
+
+/* Refinamento visual — Pantone Burgundy, PMS 567 C e Sugar Swizzle */
+:root {
+  --accent: #6b2938;
+  --accent-2: #7b3343;
+  --cream: #f4f1e8;
+  --green: #173f35;
+}
+[data-theme='dark'] {
+  --accent: #713040;
+  --accent-2: #8a4050;
+  --cream: #f4f1e8;
+  --green: #173f35;
+}
+.book-shape:nth-child(1), .primary-btn, .brand-mark, .read-badge { background:var(--cream); }
+.book-shape:nth-child(3) { background:var(--green); }
+.book-shape:nth-child(2) { background:var(--accent); }
+
+/* Capas sempre com o mesmo tamanho, independentemente da imagem de origem */
+.grid { align-items:start; grid-template-columns:repeat(5,minmax(0,1fr)); }
+.library-item, .book-card, .cover-wrap, .cover-wrap > a { min-width:0; width:100%; }
+.cover-wrap > a { display:block; height:100%; }
+.cover-wrap img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
+.library-item { overflow:hidden; }
+
+.user-chip { display:flex; align-items:center; gap:8px; max-width:170px; padding:5px 9px 5px 5px; border:1px solid var(--border); border-radius:999px; background:var(--surface); }
+.user-chip img,.user-chip span { width:30px;height:30px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--accent);color:white;font-weight:900; }
+.user-chip strong { white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem; }
+
+.finish-btn { border-radius:14px;padding:12px 15px;font-weight:850;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid color-mix(in srgb,var(--green) 60%,var(--border));background:color-mix(in srgb,var(--green) 14%,var(--surface));color:color-mix(in srgb,var(--green) 78%,var(--text)); }
+[data-theme='dark'] .finish-btn { color:#9bd2bd; }
+
+.read-count-row { display:grid;grid-template-columns:1fr auto;gap:9px; }
+.confirm-count-btn { border:0;border-radius:11px;background:var(--green);color:var(--cream);padding:0 14px;font-weight:850;display:flex;align-items:center;gap:7px; }
+.confirm-count-btn:disabled { opacity:.45; }
+.book-description { line-height:1.75;max-width:780px; }
+.metadata-toggle { margin-left:9px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:14px;padding:11px 15px;font-weight:800; }
+.metadata-editor { margin-top:24px;padding:22px;border:1px solid var(--border);border-radius:20px;background:var(--surface); }
+.metadata-editor h2 { font-size:1.7rem; }
+.metadata-editor > p { color:var(--muted); }
+.metadata-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:18px 0; }
+.metadata-grid label { display:grid;gap:6px;font-weight:800; }
+.metadata-grid input,.metadata-grid textarea { width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font:inherit; }
+.metadata-grid .wide { grid-column:1/-1; }
+
+.recommend-results { display:grid;gap:16px;margin-top:28px; }
+.recommend-card { display:grid;grid-template-columns:64px 1fr;gap:20px;padding:24px;border:1px solid var(--border);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden; }
+.recommend-card:before { content:'';position:absolute;inset:0 auto 0 0;width:5px;background:var(--accent); }
+.recommend-index { font-family:Georgia,serif;font-size:2rem;color:var(--accent);font-weight:700; }
+.recommend-card small { color:var(--accent-2);font-weight:900;letter-spacing:.08em;text-transform:uppercase; }
+.recommend-card h2 { font-size:clamp(1.6rem,3vw,2.4rem);margin:7px 0 2px; }
+.recommend-author { margin:0 0 12px;color:var(--muted);font-weight:800; }
+.recommend-card p:not(.recommend-author) { line-height:1.65;max-width:720px; }
+.recommend-card .secondary-btn { margin-top:7px; }
+
+@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.user-chip strong{display:none}.user-chip{padding-right:5px}}
+@media(max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metadata-grid{grid-template-columns:1fr}.metadata-grid .wide{grid-column:auto}.read-count-row{grid-template-columns:1fr}.confirm-count-btn{min-height:42px;justify-content:center}.recommend-card{grid-template-columns:1fr;gap:5px}.recommend-index{font-size:1.25rem}.metadata-toggle{margin:10px 0 0;width:100%;justify-content:center}}

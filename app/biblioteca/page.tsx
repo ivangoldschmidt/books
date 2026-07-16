@@ -5,7 +5,7 @@ import { StarRating } from '@/components/StarRating';
 import { createClient } from '@/lib/supabase-browser';
 import type { CustomCategory, LibraryItem, ShelfStatus } from '@/lib/types';
 import { normalize, shelfLabels } from '@/lib/utils';
-import { FolderPlus, Heart, Trash2, X } from 'lucide-react';
+import { CheckCircle2, FolderPlus, Heart, Trash2, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
@@ -109,6 +109,15 @@ function Content() {
     else setItems(current => current.map(entry => entry.id === item.id ? { ...entry, is_favorite: next } : entry));
   }
 
+  async function finishReading(item: LibraryItem) {
+    const now = new Date().toISOString();
+    const nextCount = Math.max(1, item.read_count || 0) + 1;
+    const { error: finishError } = await createClient().from('library_items').update({
+      status: 'read', read_count: nextCount, finished_at: now, updated_at: now,
+    }).eq('id', item.id);
+    if (finishError) setError(finishError.message);
+    else setItems(current => current.map(entry => entry.id === item.id ? { ...entry, status: 'read', read_count: nextCount, finished_at: now, updated_at: now } : entry));
+  }
 
   const visible = useMemo(() => items.filter((item: any) => {
     const matchesShelf = filter === 'all' || item.status === filter;
@@ -199,6 +208,7 @@ function Content() {
                 />
                 <StarRating value={item.rating} onChange={rating => rate(item, rating)} />
                 <div className="library-card-actions">
+                  {item.status === 'reading' && <button className="finish-btn" onClick={() => finishReading(item)}><CheckCircle2 size={16} />Terminei de ler</button>}
                   <button className="danger-btn" onClick={() => removeBook(item)}><Trash2 size={16} />Remover</button>
                 </div>
               </div>

@@ -1,100 +1,11 @@
 'use client';
-
-import { createClient } from '@/lib/supabase-browser';
-import type { Book, LibraryItem, ShelfStatus } from '@/lib/types';
-import { bookKey, shelfLabels } from '@/lib/utils';
-import { Heart } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-
-export default function BookDetail() {
-  const params = useSearchParams();
-  const [item, setItem] = useState<LibraryItem | null>(null);
-  const [readCount, setReadCount] = useState(1);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const book = useMemo(() => {
-    try {
-      return JSON.parse(decodeURIComponent(escape(atob(params.get('data') || '')))) as Book;
-    } catch {
-      return null;
-    }
-  }, [params]);
-
-  useEffect(() => {
-    if (!book) return;
-    void (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from('library_items').select('*').eq('user_id', user.id).eq('book_key', bookKey(book)).maybeSingle();
-      if (data) {
-        const current = data as LibraryItem;
-        setItem(current);
-        setReadCount(current.read_count || 1);
-      }
-    })();
-  }, [book]);
-
-  if (!book) return <main className="container section"><div className="empty">Não foi possível carregar este livro.</div></main>;
-
-  async function save(status: ShelfStatus) {
-    if (!book) return;
-    setBusy(true); setError(''); setMessage('');
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { location.href = '/login'; return; }
-    const now = new Date().toISOString();
-    const count = status === 'read' ? Math.max(1, Number(readCount) || 1) : Math.max(1, item?.read_count || 1);
-    const { data, error: saveError } = await supabase.from('library_items').upsert({
-      user_id: user.id,
-      book_key: bookKey(book),
-      status,
-      read_count: count,
-      is_favorite: item?.is_favorite || false,
-      rating: item?.rating || null,
-      book,
-      updated_at: now,
-      finished_at: status === 'read' ? now : item?.finished_at || null,
-    }, { onConflict: 'user_id,book_key' }).select('*').single();
-    if (saveError) setError(saveError.message);
-    else { setItem(data as LibraryItem); setMessage(`Livro salvo em “${shelfLabels[status]}”.`); }
-    setBusy(false);
-  }
-
-  async function toggleFavorite() {
-    if (!book) return;
-    if (!item) { setError('Adicione o livro à biblioteca antes de favoritar.'); return; }
-    const next = !item.is_favorite;
-    const { error: favoriteError } = await createClient().from('library_items').update({ is_favorite: next, updated_at: new Date().toISOString() }).eq('id', item.id);
-    if (favoriteError) setError(favoriteError.message);
-    else setItem({ ...item, is_favorite: next });
-  }
-
-  return <main className="container">
-    <section className="detail">
-      <div>
-        {book.coverUrl ? <img className="detail-cover" src={book.coverUrl} alt={`Capa de ${book.title}`} /> : <div className="cover-wrap detail-placeholder"><div className="cover-placeholder">{book.title}</div></div>}
-        <div className="read-count-box">
-          <label htmlFor="read-count">Quantas vezes você leu?</label>
-          <input id="read-count" type="number" min="1" step="1" value={readCount} onChange={event => setReadCount(Math.max(1, Number(event.target.value) || 1))} />
-          <small>Este valor é usado quando você escolher “Já li”.</small>
-        </div>
-      </div>
-      <div>
-        <div className="eyebrow">{book.source}</div>
-        <h1>{book.title}</h1>
-        <p className="muted"><strong>{book.authors.join(', ') || 'Autor desconhecido'}</strong>{book.publishedYear ? ` · ${book.publishedYear}` : ''}</p>
-        <p style={{ lineHeight: 1.75 }}>{book.description || 'Descrição não disponível.'}</p>
-        <div className="detail-shelf-actions">
-          {(['read', 'reading', 'want'] as ShelfStatus[]).map(status => <button disabled={busy} key={status} className={item?.status === status ? 'primary-btn' : 'secondary-btn'} onClick={() => save(status)}>{shelfLabels[status]}</button>)}
-        </div>
-        <button className={`favorite-detail-btn ${item?.is_favorite ? 'active' : ''}`} onClick={toggleFavorite}><Heart size={19} fill={item?.is_favorite ? 'currentColor' : 'none'} />{item?.is_favorite ? 'Favorito' : 'Adicionar aos favoritos'}</button>
-        {message && <p className="success-message">{message}</p>}
-        {error && <p className="form-error">{error}</p>}
-      </div>
-    </section>
-  </main>;
-}
+import { createClient } from '@/lib/supabase-browser';import type { Book,LibraryItem,ShelfStatus } from '@/lib/types';import { bookKey,shelfLabels } from '@/lib/utils';import { Check,Heart,Pencil,Save } from 'lucide-react';import { useSearchParams } from 'next/navigation';import { useEffect,useMemo,useState } from 'react';
+export default function BookDetail(){const params=useSearchParams();const[item,setItem]=useState<LibraryItem|null>(null);const[readCount,setReadCount]=useState(1);const[busy,setBusy]=useState(false);const[message,setMessage]=useState('');const[error,setError]=useState('');const[editing,setEditing]=useState(false);const[editable,setEditable]=useState<Book|null>(null);
+const book=useMemo(()=>{try{return JSON.parse(decodeURIComponent(escape(atob(params.get('data')||'')))) as Book}catch{return null}},[params]);useEffect(()=>{if(!book)return;setEditable(book);void(async()=>{const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user)return;const{data}=await s.from('library_items').select('*').eq('user_id',user.id).eq('book_key',bookKey(book)).maybeSingle();if(data){const current=data as LibraryItem;setItem(current);setReadCount(current.read_count||1);setEditable(current.book)}})()},[book]);if(!book||!editable)return <main className="container section"><div className="empty">Não foi possível carregar este livro.</div></main>;
+async function save(status:ShelfStatus){const currentBook=editable;if(!currentBook)return;setBusy(true);setError('');setMessage('');const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const now=new Date().toISOString();const count=status==='read'?Math.max(1,Number(readCount)||1):Math.max(1,item?.read_count||1);const{data,error:e}=await s.from('library_items').upsert({user_id:user.id,book_key:bookKey(currentBook),status,read_count:count,is_favorite:item?.is_favorite||false,rating:item?.rating||null,book:currentBook,updated_at:now,finished_at:status==='read'?now:item?.finished_at||null},{onConflict:'user_id,book_key'}).select('*').single();if(e)setError(e.message);else{setItem(data as LibraryItem);setMessage(`Livro salvo em “${shelfLabels[status]}”.`)}setBusy(false)}
+async function confirmCount(){if(!item){setError('Adicione o livro à biblioteca antes de salvar o número de leituras.');return}const count=Math.max(1,Number(readCount)||1);const{error:e}=await createClient().from('library_items').update({read_count:count,updated_at:new Date().toISOString()}).eq('id',item.id);if(e)setError(e.message);else{setItem({...item,read_count:count});setMessage('Número de leituras atualizado.')}}
+async function toggleFavorite(){if(!item){setError('Adicione o livro à biblioteca antes de favoritar.');return}const next=!item.is_favorite;const{error:e}=await createClient().from('library_items').update({is_favorite:next,updated_at:new Date().toISOString()}).eq('id',item.id);if(e)setError(e.message);else setItem({...item,is_favorite:next})}
+async function saveMetadata(){const currentBook=editable;if(!currentBook)return;if(!item){setError('Adicione o livro à biblioteca antes de editar os dados.');return}const{error:e}=await createClient().from('library_items').update({book:currentBook,updated_at:new Date().toISOString()}).eq('id',item.id);if(e)setError(e.message);else{setItem({...item,book:currentBook});setEditing(false);setMessage('Informações do livro atualizadas.')}}
+const set=(key:keyof Book,value:any)=>setEditable(current=>current?{...current,[key]:value}:current);const list=(value:string)=>value.split(',').map(x=>x.trim()).filter(Boolean);
+return <main className="container"><section className="detail"><div>{editable.coverUrl?<img className="detail-cover" src={editable.coverUrl} alt={`Capa de ${editable.title}`}/>:<div className="cover-wrap detail-placeholder"><div className="cover-placeholder">{editable.title}</div></div>}<div className="read-count-box"><label htmlFor="read-count">Quantas vezes você leu?</label><div className="read-count-row"><input id="read-count" type="number" min="1" step="1" value={readCount} onChange={e=>setReadCount(Math.max(1,Number(e.target.value)||1))}/><button className="confirm-count-btn" onClick={confirmCount} disabled={!item}><Check size={17}/>Confirmar</button></div><small>O valor será exibido na capa a partir da segunda leitura.</small></div></div><div><div className="eyebrow">{editable.source}</div><h1>{editable.title}</h1><p className="muted"><strong>{editable.authors.join(', ')||'Autor desconhecido'}</strong>{editable.publishedYear?` · ${editable.publishedYear}`:''}</p><p className="book-description">{editable.description||'Descrição não disponível.'}</p><div className="detail-shelf-actions">{(['read','reading','want'] as ShelfStatus[]).map(status=><button disabled={busy} key={status} className={item?.status===status?'primary-btn':'secondary-btn'} onClick={()=>save(status)}>{shelfLabels[status]}</button>)}</div><button className={`favorite-detail-btn ${item?.is_favorite?'active':''}`} onClick={toggleFavorite}><Heart size={19} fill={item?.is_favorite?'currentColor':'none'}/>{item?.is_favorite?'Favorito':'Adicionar aos favoritos'}</button><button className="metadata-toggle" onClick={()=>setEditing(!editing)}><Pencil size={17}/>{editing?'Fechar edição':'Completar informações'}</button>
+{editing&&<section className="metadata-editor"><h2>Informações do livro</h2><p>Complete ou corrija dados que não vieram das APIs.</p><div className="metadata-grid"><label>Título<input value={editable.title} onChange={e=>set('title',e.target.value)}/></label><label>Autores<input value={editable.authors.join(', ')} onChange={e=>set('authors',list(e.target.value))}/></label><label>Ano<input value={editable.publishedYear||''} onChange={e=>set('publishedYear',e.target.value)}/></label><label>Idioma<input value={editable.language||''} onChange={e=>set('language',e.target.value)}/></label><label>País do autor<input value={(editable.authorCountries||[]).join(', ')} onChange={e=>set('authorCountries',list(e.target.value))}/></label><label>Editora<input value={editable.publisher||''} onChange={e=>set('publisher',e.target.value)}/></label><label>Gêneros<input value={(editable.genres||[]).join(', ')} onChange={e=>set('genres',list(e.target.value))}/></label><label>Série<input value={editable.series||''} onChange={e=>set('series',e.target.value)}/></label><label>ISBN<input value={editable.isbn||''} onChange={e=>set('isbn',e.target.value)}/></label><label>URL da capa<input value={editable.coverUrl||''} onChange={e=>set('coverUrl',e.target.value)}/></label><label className="wide">Descrição<textarea rows={6} value={editable.description||''} onChange={e=>set('description',e.target.value)}/></label></div><button className="primary-btn" onClick={saveMetadata}><Save size={17}/>Salvar informações</button></section>}{message&&<p className="success-message">{message}</p>}{error&&<p className="form-error">{error}</p>}</div></section></main>}

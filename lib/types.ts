@@ -1,6 +1,6 @@
 export type ShelfStatus = 'read' | 'reading' | 'want';
 export type Book = {
-  id:string; source:'google'|'openlibrary'|'gutendex'|'internetarchive'; sourceId:string; googleVolumeId?:string;
+  id:string; source:'google'|'openlibrary'|'gutendex'|'internetarchive'|'manual'; sourceId:string; googleVolumeId?:string;
   title:string; authors:string[]; description:string; coverUrl?:string; publishedYear?:string; language?:string; isbn?:string;
   previewUrl?:string; embeddable?:boolean; genres?:string[]; authorCountries?:string[]; publisher?:string; series?:string;
 };

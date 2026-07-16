@@ -55,3 +55,13 @@ Depois de atualizar os arquivos, execute novamente `supabase/schema.sql` no SQL 
 - Clique no coração da capa para adicionar ou remover um livro dos favoritos.
 - As categorias criadas ficam visíveis como botões.
 - Clique no `×` da categoria para excluí-la. A exclusão da categoria não remove os livros.
+
+## Atualização desta versão
+
+- A busca mantém o botão `+` com o menu de estantes.
+- A página do livro mostra diretamente `Já li`, `Lendo agora` e `Quero ler`.
+- A quantidade de leituras é digitada na página do livro.
+- A prévia incorporada foi removida.
+- A IA permite recomendação geral, por autores, por livros selecionados ou por pedido livre.
+- Livros que não existem nas APIs podem ser cadastrados em `/adicionar-manualmente`.
+- Não é necessária nenhuma alteração adicional no banco para estes recursos.

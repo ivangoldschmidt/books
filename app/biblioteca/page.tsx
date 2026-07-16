@@ -109,26 +109,6 @@ function Content() {
     else setItems(current => current.map(entry => entry.id === item.id ? { ...entry, is_favorite: next } : entry));
   }
 
-  async function reread(item: LibraryItem) {
-    const now = new Date().toISOString();
-    const count = item.read_count + 1;
-    const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from('library_items')
-      .update({ read_count: count, status: 'read', finished_at: now, updated_at: now })
-      .eq('id', item.id);
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-    await supabase.from('reading_history').insert({
-      user_id: item.user_id,
-      library_item_id: item.id,
-      event_type: 'reread',
-      occurred_at: now,
-    });
-    await load();
-  }
 
   const visible = useMemo(() => items.filter((item: any) => {
     const matchesShelf = filter === 'all' || item.status === filter;
@@ -219,7 +199,6 @@ function Content() {
                 />
                 <StarRating value={item.rating} onChange={rating => rate(item, rating)} />
                 <div className="library-card-actions">
-                  {item.status === 'read' && <button className="secondary-btn" onClick={() => reread(item)}>Li novamente</button>}
                   <button className="danger-btn" onClick={() => removeBook(item)}><Trash2 size={16} />Remover</button>
                 </div>
               </div>

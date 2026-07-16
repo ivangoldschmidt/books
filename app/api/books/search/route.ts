@@ -43,81 +43,11 @@ async function translateSearchQuery(query: string): Promise<string> {
 }
 
 
-const GOOGLE_STOP_WORDS = new Set([
-  'a','o','as','os','um','uma','uns','umas','de','da','do','das','dos','e','em','no','na','nos','nas','por','para','com','sem','que','the','a','an','of','and','in','on','for','to','with','without','book','livro'
-]);
-
-function googleSearchTerms(input:string):string[] {
-  const isbn=input.replace(/[^0-9Xx]/g,'');
-  if (/^(?:97[89])?\d{9}[\dXx]$/.test(isbn)) return [`isbn:${isbn}`];
-
-  const normalized=input
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/[“”"'`´]/g,' ')
-    .replace(/[^\p{L}\p{N}\s-]/gu,' ')
-    .replace(/\s+/g,' ')
-    .trim();
-
-  const raw=normalized.split(' ').filter(Boolean);
-  const meaningful=raw.filter((word)=>word.length>1&&!GOOGLE_STOP_WORDS.has(word.toLowerCase()));
-  const unique=[...new Set(meaningful.map((word)=>word.toLowerCase()))];
-
-  // Google Books combina os termos de forma ampla, mas muitos termos reduzem
-  // drasticamente a cobertura. Seis palavras relevantes equilibram recall e precisão.
-  return unique.slice(0,6);
-}
-
-function googleResultScore(book:Book,terms:string[]):number {
-  const haystack=`${book.title} ${(book.authors||[]).join(' ')}`
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  return terms.reduce((score,term)=>score+(haystack.includes(term.toLowerCase())?1:0),0);
-}
-
 async function google(q:string):Promise<Book[]>{
- const key=process.env.GOOGLE_BOOKS_API_KEY;
- const terms=googleSearchTerms(q);
- const url=new URL('https://www.googleapis.com/books/v1/volumes');
- url.searchParams.set('q',terms.length?terms.join(' '):q);
- url.searchParams.set('maxResults','40');
- url.searchParams.set('printType','books');
- url.searchParams.set('projection','full');
- url.searchParams.set('orderBy','relevance');
- if(key)url.searchParams.set('key',key);
- const r=await fetch(url,{
-   signal:timeout(12000),
-   next:{revalidate:3600},
-   headers:{Accept:'application/json'}
- });
- if(!r.ok){
-   const detail=await r.text().catch(()=> '');
-   throw new Error(`Google Books indisponível (${r.status})${detail?`: ${detail.slice(0,160)}`:''}`);
- }
- const j=await r.json();
- const mapped:Book[]=(j.items||[]).map((x:any)=>({
-   id:`google:${x.id}`,
-   source:'google',
-   sourceId:x.id,
-   googleVolumeId:x.id,
-   title:x.volumeInfo?.title||'Sem título',
-   authors:x.volumeInfo?.authors||[],
-   description:safeDescription(x.volumeInfo?.description),
-   coverUrl:(x.volumeInfo?.imageLinks?.extraLarge||x.volumeInfo?.imageLinks?.large||x.volumeInfo?.imageLinks?.medium||x.volumeInfo?.imageLinks?.thumbnail||x.volumeInfo?.imageLinks?.smallThumbnail)?.replace('http:','https:'),
-   publishedYear:x.volumeInfo?.publishedDate?.slice(0,4),
-   language:x.volumeInfo?.language,
-   isbn:x.volumeInfo?.industryIdentifiers?.find((i:any)=>i.type==='ISBN_13')?.identifier||x.volumeInfo?.industryIdentifiers?.find((i:any)=>i.type==='ISBN_10')?.identifier,
-   previewUrl:x.volumeInfo?.previewLink,
-   embeddable:!!x.accessInfo?.embeddable,
-   genres:x.volumeInfo?.categories||[],
-   publisher:x.volumeInfo?.publisher,
-   series:x.volumeInfo?.seriesInfo?.bookDisplayNumber?x.volumeInfo?.title:undefined
- }));
-
- // Mantém resultados parciais: o score só melhora a ordem e nunca elimina livros.
- return mapped
-   .map((book,index)=>({book,index,score:googleResultScore(book,terms)}))
-   .sort((a,b)=>b.score-a.score||a.index-b.index)
-   .map(({book})=>book);
+ const key=process.env.GOOGLE_BOOKS_API_KEY; const url=new URL('https://www.googleapis.com/books/v1/volumes');
+ url.searchParams.set('q',q); url.searchParams.set('maxResults','20'); if(key)url.searchParams.set('key',key);
+ const r=await fetch(url,{signal:timeout(6500),next:{revalidate:3600}}); if(!r.ok)throw new Error('Google Books indisponível'); const j=await r.json();
+ return (j.items||[]).map((x:any)=>({id:`google:${x.id}`,source:'google',sourceId:x.id,googleVolumeId:x.id,title:x.volumeInfo?.title||'Sem título',authors:x.volumeInfo?.authors||[],description:safeDescription(x.volumeInfo?.description),coverUrl:(x.volumeInfo?.imageLinks?.thumbnail||x.volumeInfo?.imageLinks?.smallThumbnail)?.replace('http:','https:'),publishedYear:x.volumeInfo?.publishedDate?.slice(0,4),language:x.volumeInfo?.language,isbn:x.volumeInfo?.industryIdentifiers?.find((i:any)=>i.type==='ISBN_13')?.identifier,previewUrl:x.volumeInfo?.previewLink,embeddable:!!x.accessInfo?.embeddable,genres:x.volumeInfo?.categories||[],publisher:x.volumeInfo?.publisher,series:x.volumeInfo?.seriesInfo?.bookDisplayNumber?x.volumeInfo?.title:undefined}));
 }
 async function openLibrary(q:string):Promise<Book[]>{
  const url=new URL('https://openlibrary.org/search.json'); url.searchParams.set('q',q); url.searchParams.set('limit','20'); url.searchParams.set('fields','key,title,author_name,first_publish_year,isbn,cover_i,language,publisher,subject');

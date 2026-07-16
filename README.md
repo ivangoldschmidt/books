@@ -1,6 +1,6 @@
 # Minha Estante v2
 
-Biblioteca pessoal responsiva em Next.js 15, Supabase, Google Books/Open Library/Gutendex/Internet Archive e recomendações com Gemini.
+Biblioteca pessoal responsiva em Next.js 15, Supabase, Google Books/Open Library/Gutendex/Internet Archive e recomendações com OpenRouter.
 
 ## Recursos
 - Login Google e e-mail/senha.
@@ -29,9 +29,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 NEXT_PUBLIC_SITE_URL=https://seu-dominio.vercel.app
 GOOGLE_BOOKS_API_KEY=...
-GEMINI_API_KEY=...
+OPENROUTER_API_KEY=sk-or-v1-...
+OPENROUTER_MODEL=openrouter/free
 ```
-A chave Gemini é criada no Google AI Studio. O código usa `gemini-3-flash-preview`; caso o modelo deixe de estar disponível, altere o nome em `app/api/recommend/route.ts` para um modelo Flash liberado no seu projeto.
+Crie a chave em OpenRouter e adicione-a somente nas variáveis de ambiente da Vercel. O projeto usa `openrouter/free` por padrão, que encaminha a solicitação a um modelo gratuito disponível. Para fixar outro modelo, altere `OPENROUTER_MODEL` na Vercel, sem modificar o código.
 
 ## 3. GitHub/Vercel
 Envie o conteúdo da pasta para um repositório, importe na Vercel e faça Deploy. Depois de alterar variáveis, faça Redeploy sem cache.

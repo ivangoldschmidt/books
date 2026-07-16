@@ -354,3 +354,59 @@ h2 { font-family:Georgia,serif; font-size:clamp(2rem,4vw,3.3rem); margin:0; lett
 
 @media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.user-chip strong{display:none}.user-chip{padding-right:5px}}
 @media(max-width:620px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metadata-grid{grid-template-columns:1fr}.metadata-grid .wide{grid-column:auto}.read-count-row{grid-template-columns:1fr}.confirm-count-btn{min-height:42px;justify-content:center}.recommend-card{grid-template-columns:1fr;gap:5px}.recommend-index{font-size:1.25rem}.metadata-toggle{margin:10px 0 0;width:100%;justify-content:center}}
+
+/* Navegação móvel e texto responsivo dentro dos cards */
+.menu-toggle { display:none; }
+.mobile-menu, .mobile-menu-backdrop { display:none; }
+.avatar-shell { width:34px; height:34px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:var(--surface-2); flex:0 0 auto; }
+.avatar-shell img { width:100%; height:100%; object-fit:cover; display:block; }
+.user-chip { display:inline-flex; align-items:center; gap:8px; min-width:0; padding:4px 10px 4px 4px; border:1px solid var(--border); border-radius:999px; background:var(--surface); }
+.user-chip strong { max-width:120px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+
+.metric-card, .numbers-grid article { min-width:0; overflow:hidden; container-type:inline-size; }
+.metric-card strong, .numbers-grid strong {
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  hyphens:auto;
+  line-height:1.02;
+  text-wrap:balance;
+}
+.metric-card strong.fit-md, .numbers-grid strong.fit-md { font-size:clamp(1.35rem,10cqi,1.8rem); }
+.metric-card strong.fit-sm, .numbers-grid strong.fit-sm { font-size:clamp(1.08rem,8.4cqi,1.5rem); }
+.metric-card strong.fit-xs, .numbers-grid strong.fit-xs { font-size:clamp(.92rem,7.2cqi,1.25rem); line-height:1.08; }
+
+@media(max-width:900px){
+  .nav { height:64px; gap:10px; flex-wrap:nowrap; }
+  .brand { margin-right:auto; min-width:0; font-size:1.05rem; }
+  .brand-mark { width:34px; height:34px; }
+  .nav-links, .desktop-user, .desktop-auth { display:none !important; }
+  .menu-toggle { display:grid; }
+  .mobile-menu-backdrop { display:block; position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.48); opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .mobile-menu-backdrop.open { opacity:1; pointer-events:auto; }
+  .mobile-menu { display:flex; position:fixed; z-index:90; top:0; right:0; bottom:0; width:min(86vw,340px); padding:18px; flex-direction:column; background:var(--bg); border-left:1px solid var(--border); box-shadow:-20px 0 60px rgba(0,0,0,.25); transform:translateX(105%); transition:transform .24s ease; }
+  .mobile-menu.open { transform:translateX(0); }
+  .mobile-menu-head { display:flex; align-items:center; justify-content:space-between; padding-bottom:15px; border-bottom:1px solid var(--border); font-family:Georgia,serif; font-size:1.3rem; }
+  .mobile-profile { display:flex; align-items:center; gap:11px; padding:16px 4px; border-bottom:1px solid var(--border); }
+  .mobile-profile .avatar-shell { width:44px; height:44px; }
+  .mobile-profile span:last-child { min-width:0; display:grid; }
+  .mobile-profile small { color:var(--muted); }
+  .mobile-profile strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mobile-nav { display:grid; gap:7px; padding:15px 0; }
+  .mobile-nav a { display:flex; align-items:center; gap:12px; padding:13px 12px; border-radius:13px; font-weight:800; }
+  .mobile-nav a:hover, .mobile-nav a:focus-visible { background:var(--surface-2); }
+  .mobile-menu-foot { margin-top:auto; padding-top:15px; border-top:1px solid var(--border); }
+  .mobile-menu-foot .secondary-btn { width:100%; }
+}
+
+@media(max-width:620px){
+  .numbers-grid article, .metric-card { min-height:122px; padding:18px; }
+  .numbers-grid strong, .metric-card strong { font-size:clamp(1.5rem,11cqi,2rem); }
+  .numbers-grid strong.fit-md, .metric-card strong.fit-md { font-size:clamp(1.18rem,9cqi,1.55rem); }
+  .numbers-grid strong.fit-sm, .metric-card strong.fit-sm { font-size:clamp(.98rem,7.8cqi,1.3rem); }
+  .numbers-grid strong.fit-xs, .metric-card strong.fit-xs { font-size:clamp(.82rem,6.8cqi,1.08rem); }
+}
+@media(max-width:620px){
+  .numbers-page h1 { font-size:clamp(2.35rem,13vw,3.4rem); line-height:.94; letter-spacing:-.04em; overflow-wrap:anywhere; }
+  .numbers-page .lead { font-size:.98rem; line-height:1.45; }
+}

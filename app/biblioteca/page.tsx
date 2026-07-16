@@ -3,9 +3,9 @@
 import { BookCard } from '@/components/BookCard';
 import { StarRating } from '@/components/StarRating';
 import { createClient } from '@/lib/supabase-browser';
-import type { CustomCategory, LibraryItem, ShelfStatus } from '@/lib/types';
+import type { LibraryItem, ShelfStatus } from '@/lib/types';
 import { normalize, shelfLabels } from '@/lib/utils';
-import { CheckCircle2, FolderPlus, Heart, Trash2, X } from 'lucide-react';
+import { CheckCircle2, Heart, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
@@ -28,10 +28,7 @@ function Content() {
   const [filter, setFilter] = useState<ShelfStatus | 'all'>((params.get('status') as ShelfStatus) || 'all');
   const [specialFilter, setSpecialFilter] = useState<SpecialFilter>(params.get('view') === 'favorites' ? 'favorites' : 'all');
   const [items, setItems] = useState<LibraryItem[]>([]);
-  const [categories, setCategories] = useState<CustomCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [group, setGroup] = useState<Group>((params.get('group') as Group) || 'none');
-  const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -43,47 +40,19 @@ function Content() {
       return;
     }
 
-    const [{ data: itemData, error: itemError }, { data: categoryData, error: categoryError }] = await Promise.all([
-      supabase.from('library_items').select('*,library_item_categories(category_id)').order('updated_at', { ascending: false }),
-      supabase.from('custom_categories').select('*').order('name'),
-    ]);
+    const { data: itemData, error: itemError } = await supabase
+      .from('library_items')
+      .select('*')
+      .order('updated_at', { ascending: false });
 
-    if (itemError || categoryError) setError(itemError?.message || categoryError?.message || 'Não foi possível carregar a biblioteca.');
+    if (itemError) setError(itemError.message || 'Não foi possível carregar a estante.');
     const rawItems = (itemData || []) as unknown as LibraryItem[];
     const deduped = Array.from(new Map(rawItems.map(entry => [entry.book_key, entry])).values());
     setItems(deduped);
-    setCategories((categoryData || []) as CustomCategory[]);
     setLoading(false);
   }
 
   useEffect(() => { void load(); }, []);
-
-  async function createCategory() {
-    const name = newCategory.trim();
-    if (!name) return;
-    setError('');
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error: insertError } = await supabase.from('custom_categories').insert({ user_id: user.id, name });
-    if (insertError) {
-      setError(insertError.code === '23505' ? 'Você já possui uma categoria com esse nome.' : insertError.message);
-      return;
-    }
-    setNewCategory('');
-    await load();
-  }
-
-  async function deleteCategory(category: CustomCategory) {
-    if (!confirm(`Excluir a categoria “${category.name}”? Os livros não serão removidos da biblioteca.`)) return;
-    const { error: deleteError } = await createClient().from('custom_categories').delete().eq('id', category.id);
-    if (deleteError) {
-      setError(deleteError.message);
-      return;
-    }
-    if (selectedCategory === category.id) setSelectedCategory('all');
-    await load();
-  }
 
   async function removeBook(item: LibraryItem) {
     if (!confirm(`Remover “${item.book.title}” da biblioteca?`)) return;
@@ -124,9 +93,8 @@ function Content() {
   const visible = useMemo(() => items.filter((item: any) => {
     const matchesShelf = filter === 'all' || item.status === filter;
     const matchesFavorite = specialFilter !== 'favorites' || item.is_favorite;
-    const matchesCategory = selectedCategory === 'all' || item.library_item_categories?.some((join: any) => join.category_id === selectedCategory);
-    return matchesShelf && matchesFavorite && matchesCategory;
-  }), [items, filter, specialFilter, selectedCategory]);
+    return matchesShelf && matchesFavorite;
+  }), [items, filter, specialFilter]);
 
   function groupKeys(item: LibraryItem) {
     const book = item.book;
@@ -157,16 +125,6 @@ function Content() {
           <div className="eyebrow">Sua coleção</div>
           <h1>Estante</h1>
         </div>
-        <div className="category-create">
-          <input
-            value={newCategory}
-            onChange={event => setNewCategory(event.target.value)}
-            onKeyDown={event => { if (event.key === 'Enter') void createCategory(); }}
-            placeholder="Nova categoria"
-            maxLength={50}
-          />
-          <button className="primary-btn" onClick={createCategory}><FolderPlus size={17} />Criar</button>
-        </div>
       </div>
 
       <div className="library-filters" aria-label="Filtros da biblioteca">
@@ -174,12 +132,6 @@ function Content() {
         <button className={`filter-pill favorite-filter ${specialFilter === 'favorites' ? 'active' : ''}`} onClick={() => setSpecialFilter('favorites')}>
           <Heart size={17} fill={specialFilter === 'favorites' ? 'currentColor' : 'none'} /> Favoritos ({favoritesCount})
         </button>
-        {categories.map(category => (
-          <span className={`category-pill ${selectedCategory === category.id ? 'active' : ''}`} key={category.id}>
-            <button onClick={() => setSelectedCategory(selectedCategory === category.id ? 'all' : category.id)}>{category.name}</button>
-            <button className="category-delete" onClick={() => deleteCategory(category)} aria-label={`Excluir categoria ${category.name}`} title="Excluir categoria"><X size={15} /></button>
-          </span>
-        ))}
       </div>
 
       <div className="controls">

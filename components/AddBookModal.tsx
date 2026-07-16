@@ -1,3 +1,40 @@
 'use client';
-import type{Book,ShelfStatus,CustomCategory}from'@/lib/types';import{bookKey,shelfLabels}from'@/lib/utils';import{createClient}from'@/lib/supabase-browser';import{useEffect,useState}from'react';
-export function AddBookModal({book,onClose,onSaved}:{book:Book;onClose:()=>void;onSaved?:()=>void}){const[busy,setBusy]=useState(false),[error,setError]=useState(''),[cats,setCats]=useState<CustomCategory[]>([]),[selected,setSelected]=useState<string[]>([]);useEffect(()=>{createClient().from('custom_categories').select('*').order('name').then(({data})=>setCats((data||[])as CustomCategory[]))},[]);async function save(status:ShelfStatus){setBusy(true);setError('');const s=createClient();const{data:{user}}=await s.auth.getUser();if(!user){location.href='/login';return}const now=new Date().toISOString();const key=bookKey(book);const{data:existing,error:lookupError}=await s.from('library_items').select('id,read_count,finished_at').eq('user_id',user.id).eq('book_key',key).maybeSingle();if(lookupError){setError(lookupError.message);setBusy(false);return}let item:any=null;let e:any=null;if(existing){const result=await s.from('library_items').update({status,book,updated_at:now,finished_at:status==='read'?(existing.finished_at||now):existing.finished_at}).eq('id',existing.id).select('id').single();item=result.data;e=result.error}else{const result=await s.from('library_items').insert({user_id:user.id,book_key:key,status,read_count:0,book,updated_at:now,finished_at:status==='read'?now:null}).select('id').single();item=result.data;e=result.error}if(e){setError(e.message);setBusy(false);return}if(selected.length&&item)await s.from('library_item_categories').upsert(selected.map(category_id=>({library_item_id:item.id,category_id})));onSaved?.();onClose()}return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal" onMouseDown={e=>e.stopPropagation()}><h2>Adicionar à estante</h2><p className="muted">{book.title}</p><div className="modal-actions">{(['read','reading','want']as ShelfStatus[]).map(x=><button disabled={busy} key={x} className="secondary-btn" onClick={()=>save(x)}>{shelfLabels[x]}</button>)}</div>{cats.length>0&&<><h3>Categorias opcionais</h3><div className="chip-list">{cats.map(c=><button type="button" className={`chip ${selected.includes(c.id)?'active':''}`} key={c.id} onClick={()=>setSelected(v=>v.includes(c.id)?v.filter(x=>x!==c.id):[...v,c.id])}>{c.name}</button>)}</div></>}{error&&<p className="form-error">{error}</p>}<button className="secondary-btn" onClick={onClose}>Cancelar</button></div></div>}
+import type { Book, ShelfStatus } from '@/lib/types';
+import { bookKey, shelfLabels } from '@/lib/utils';
+import { createClient } from '@/lib/supabase-browser';
+import { useState } from 'react';
+
+export function AddBookModal({ book, onClose, onSaved }: { book: Book; onClose: () => void; onSaved?: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function save(status: ShelfStatus) {
+    setBusy(true);
+    setError('');
+    const s = createClient();
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) { location.href = '/login'; return; }
+    const now = new Date().toISOString();
+    const key = bookKey(book);
+    const { data: existing, error: lookupError } = await s.from('library_items').select('id,read_count,finished_at').eq('user_id', user.id).eq('book_key', key).maybeSingle();
+    if (lookupError) { setError(lookupError.message); setBusy(false); return; }
+    let error: any = null;
+    if (existing) {
+      const result = await s.from('library_items').update({ status, book, updated_at: now, finished_at: status === 'read' ? (existing.finished_at || now) : existing.finished_at }).eq('id', existing.id);
+      error = result.error;
+    } else {
+      const result = await s.from('library_items').insert({ user_id: user.id, book_key: key, status, read_count: 0, is_favorite: false, rating: null, book, updated_at: now, finished_at: status === 'read' ? now : null });
+      error = result.error;
+    }
+    if (error) { setError(error.message); setBusy(false); return; }
+    onSaved?.();
+    onClose();
+  }
+
+  return <div className="modal-backdrop" onMouseDown={onClose}><div className="modal" onMouseDown={e => e.stopPropagation()}>
+    <h2>Adicionar à estante</h2><p className="muted">{book.title}</p>
+    <div className="modal-actions">{(['read', 'reading', 'want'] as ShelfStatus[]).map(status => <button disabled={busy} key={status} className="secondary-btn" onClick={() => save(status)}>{shelfLabels[status]}</button>)}</div>
+    {error && <p className="form-error">{error}</p>}
+    <button className="secondary-btn" onClick={onClose}>Cancelar</button>
+  </div></div>;
+}

@@ -65,3 +65,22 @@ Depois de atualizar os arquivos, execute novamente `supabase/schema.sql` no SQL 
 - A IA permite recomendação geral, por autores, por livros selecionados ou por pedido livre.
 - Livros que não existem nas APIs podem ser cadastrados em `/adicionar-manualmente`.
 - Não é necessária nenhuma alteração adicional no banco para estes recursos.
+
+## Library of Congress e tradução sob demanda
+
+A busca também consulta a API pública da Library of Congress, sem chave adicional.
+
+A tradução nunca é automática. Na página do livro, use **Traduzir e completar em português**. Essa ação usa a OpenRouter para:
+
+- traduzir título, descrição, gêneros, idioma, país e série;
+- preservar nomes próprios, autores, editoras e instituições;
+- preencher campos bibliográficos ausentes quando houver segurança;
+- substituir descrições genéricas ou inválidas da Open Library;
+- salvar os dados traduzidos na Estante quando o livro já estiver adicionado.
+
+Variáveis necessárias:
+
+```env
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=openrouter/free
+```

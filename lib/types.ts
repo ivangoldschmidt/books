@@ -11,6 +11,7 @@ export type Book = {
   originalTitle?: string;
   authors: string[];
   description: string;
+  originalDescription?: string;
   coverUrl?: string;
   publishedYear?: string;
   language?: string;
@@ -19,9 +20,13 @@ export type Book = {
   previewUrl?: string;
   embeddable?: boolean;
   genres?: string[];
+  originalGenres?: string[];
   authorCountries?: string[];
+  originalAuthorCountries?: string[];
   publisher?: string;
+  originalPublisher?: string;
   series?: string;
+  originalSeries?: string;
   translatedToPortuguese?: boolean;
   aiEnriched?: boolean;
 };

@@ -16,6 +16,11 @@ function list(value: unknown): string[] {
   return value.map(v => String(v).trim()).filter(Boolean);
 }
 
+function invalidDescription(value?: string) {
+  const text = String(value || '').trim().toLowerCase();
+  return !text || text.includes('descrição não disponível') || text.includes('abra o livro') || text.includes('open the book') || text.length < 40;
+}
+
 export async function POST(req: NextRequest) {
   const key = process.env.OPENROUTER_API_KEY;
   if (!key) return NextResponse.json({ error: 'OPENROUTER_API_KEY não configurada.' }, { status: 500 });
@@ -24,22 +29,33 @@ export async function POST(req: NextRequest) {
   if (!body?.book) return NextResponse.json({ error: 'Livro não informado.' }, { status: 400 });
 
   const book = body.book;
-  const prompt = `Traduza e complete os metadados bibliográficos abaixo para português do Brasil.
-COMANDOS OBRIGATÓRIOS:
-- Responda APENAS com JSON válido, sem markdown e sem comentários.
+  const original = {
+    title: book.originalTitle || book.title,
+    description: book.originalDescription || (invalidDescription(book.description) ? '' : book.description),
+    genres: book.originalGenres || book.genres || [],
+    authorCountries: book.originalAuthorCountries || book.authorCountries || [],
+    publisher: book.originalPublisher || book.publisher || null,
+    series: book.originalSeries || book.series || null,
+    language: book.originalLanguage || book.language || null,
+  };
+
+  const prompt = `Você é um bibliotecário especialista. Analise, complete e traduza estes metadados para português do Brasil.
+
+REGRAS OBRIGATÓRIAS:
+- Responda SOMENTE com JSON válido, sem markdown, comentários ou texto fora do JSON.
+- Produza uma descrição factual, natural, clara e sem spoilers, com 90 a 180 palavras. A descrição NUNCA pode ficar vazia e nunca pode dizer "descrição não disponível".
 - Traduza título, descrição, gêneros, idioma, país e nome de série para português.
-- NÃO traduza nomes próprios: autores, pessoas, editoras, instituições, cidades e marcas.
-- Preserve o título original em originalTitle quando o título traduzido for diferente.
-- Open Library frequentemente envia descrição genérica ou inválida; trate "Descrição não disponível", "Abra o livro" e textos semelhantes como campo vazio.
-- Complete campos ausentes usando fatos bibliográficos conhecidos. Não invente. Quando não houver segurança, use null ou [].
-- Mantenha ISBN sem alterar.
-- Descrição deve ser objetiva, natural, sem spoilers e em português.
+- NÃO traduza nomes próprios: autores, pessoas, editoras, instituições, cidades, marcas e ISBN.
+- Complete autor, descrição, ano, idioma, ISBN, gêneros, países dos autores, editora e série usando conhecimento bibliográfico confiável.
+- Se um campo não puder ser confirmado com segurança, use null ou [], exceto descrição, que deve sempre ser preenchida com uma sinopse factual.
+- Preserve o título original.
 - Se o título já estiver em português, mantenha-o.
+- Não invente prêmios, personagens ou acontecimentos.
 
-Retorne exatamente estas chaves:
-{"title":"","originalTitle":null,"authors":[],"description":"","publishedYear":null,"language":"Português","originalLanguage":null,"isbn":null,"genres":[],"authorCountries":[],"publisher":null,"series":null}
+Retorne exatamente:
+{"title":"","originalTitle":"","authors":[],"description":"","publishedYear":null,"language":"Português","originalLanguage":null,"isbn":null,"genres":[],"authorCountries":[],"publisher":null,"series":null}
 
-DADOS:
+METADADOS RECEBIDOS:
 ${JSON.stringify(book)}`;
 
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -53,10 +69,10 @@ ${JSON.stringify(book)}`;
     body: JSON.stringify({
       model: MODEL,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.1,
-      max_tokens: 1200,
+      temperature: 0.05,
+      max_tokens: 1800,
     }),
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(45000),
   });
 
   const data = await response.json().catch(() => ({}));
@@ -67,20 +83,28 @@ ${JSON.stringify(book)}`;
 
   try {
     const parsed = extractJson(data?.choices?.[0]?.message?.content || '');
+    const description = String(parsed.description || '').trim();
+    if (invalidDescription(description)) throw new Error('A IA não conseguiu produzir uma descrição completa. Tente novamente.');
+
     const enriched: Book = {
       ...book,
       title: String(parsed.title || book.title).trim(),
-      originalTitle: parsed.originalTitle ? String(parsed.originalTitle).trim() : (book.originalTitle || (parsed.title && parsed.title !== book.title ? book.title : undefined)),
+      originalTitle: String(parsed.originalTitle || original.title).trim(),
       authors: list(parsed.authors).length ? list(parsed.authors) : book.authors,
-      description: String(parsed.description || book.description || 'Descrição não disponível.').trim(),
+      description,
+      originalDescription: original.description || undefined,
       publishedYear: parsed.publishedYear ? String(parsed.publishedYear).trim() : book.publishedYear,
       language: String(parsed.language || 'Português').trim(),
-      originalLanguage: parsed.originalLanguage ? String(parsed.originalLanguage).trim() : (book.originalLanguage || book.language),
+      originalLanguage: parsed.originalLanguage ? String(parsed.originalLanguage).trim() : (original.language || undefined),
       isbn: parsed.isbn ? String(parsed.isbn).trim() : book.isbn,
-      genres: list(parsed.genres).length ? list(parsed.genres) : (book.genres || []),
-      authorCountries: list(parsed.authorCountries).length ? list(parsed.authorCountries) : (book.authorCountries || []),
+      genres: list(parsed.genres),
+      originalGenres: original.genres,
+      authorCountries: list(parsed.authorCountries),
+      originalAuthorCountries: original.authorCountries,
       publisher: parsed.publisher ? String(parsed.publisher).trim() : book.publisher,
+      originalPublisher: original.publisher || undefined,
       series: parsed.series ? String(parsed.series).trim() : book.series,
+      originalSeries: original.series || undefined,
       translatedToPortuguese: true,
       aiEnriched: true,
     };

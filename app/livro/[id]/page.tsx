@@ -1,5 +1,6 @@
-import { BookPrivateActions, ShareBookButton } from '@/components/BookPrivateActions';
 'use client';
+
+import { BookPrivateActions, ShareBookButton } from '@/components/BookPrivateActions';
 
 import { createClient } from '@/lib/supabase-browser';
 import type { Book, LibraryItem, ShelfStatus } from '@/lib/types';

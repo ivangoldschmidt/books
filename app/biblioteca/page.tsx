@@ -1,6 +1,7 @@
 'use client';
 
 import { BookCard } from '@/components/BookCard';
+import { BookPrivateActions } from '@/components/BookPrivateActions';
 import { StarRating } from '@/components/StarRating';
 import { createClient } from '@/lib/supabase-browser';
 import type { LibraryItem, ShelfStatus } from '@/lib/types';
@@ -161,6 +162,7 @@ function Content() {
                   onToggleFavorite={() => toggleFavorite(item)}
                 />
                 <StarRating value={item.rating} onChange={rating => rate(item, rating)} />
+                <BookPrivateActions item={item} onUpdated={updated=>setItems(current=>current.map(x=>x.id===updated.id?updated:x))}/>
                 <div className="library-card-actions">
                   {item.status === 'reading' && <button className="finish-btn" onClick={() => finishReading(item)}><CheckCircle2 size={16} />Terminei de ler</button>}
                   <button className="danger-btn" onClick={() => removeBook(item)}><Trash2 size={16} />Remover</button>

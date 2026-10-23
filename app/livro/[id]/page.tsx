@@ -1,3 +1,4 @@
+import { BookPrivateActions, ShareBookButton } from '@/components/BookPrivateActions';
 'use client';
 
 import { createClient } from '@/lib/supabase-browser';
@@ -232,6 +233,7 @@ export default function BookDetail() {
 
         <div className="detail-shelf-actions">{(['read', 'reading', 'want'] as ShelfStatus[]).map(status => <button disabled={busy} key={status} className={item?.status === status ? 'primary-btn' : 'secondary-btn'} onClick={() => save(status)}>{shelfLabels[status]}</button>)}</div>
         <button className={`favorite-detail-btn ${item?.is_favorite ? 'active' : ''}`} onClick={toggleFavorite}><Heart size={19} fill={item?.is_favorite ? 'currentColor' : 'none'}/>{item?.is_favorite ? 'Favorito' : 'Adicionar aos favoritos'}</button>
+        {item ? <BookPrivateActions item={item} onUpdated={updated=>setItem(updated)}/> : <ShareBookButton book={editable}/>}
         <button className="metadata-toggle" onClick={() => setEditing(!editing)}><Pencil size={17}/>{editing ? 'Fechar edição' : 'Completar informações'}</button>
 
         {editing && <section className="metadata-editor"><h2>Informações do livro</h2><p>Complete ou corrija dados que não vieram das APIs.</p><div className="metadata-grid">

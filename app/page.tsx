@@ -1,13 +1,20 @@
 'use client';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase-browser';
-import type { ShelfStatus } from '@/lib/types';
+import { ArrowUpRight, BookOpen, Clapperboard, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
-export default function Home(){
- const [counts,setCounts]=useState<Record<ShelfStatus,number>>({read:0,reading:0,want:0});
- useEffect(()=>{(async()=>{const s=createClient();const {data:{user}}=await s.auth.getUser();if(!user)return;const {data}=await s.from('library_items').select('status');if(data)setCounts({read:data.filter(x=>x.status==='read').length,reading:data.filter(x=>x.status==='reading').length,want:data.filter(x=>x.status==='want').length})})()},[]);
- return <main><div className="container"><section className="hero"><div><div className="eyebrow">Sua vida de leitura, organizada</div><h1>Histórias que ficam.<br/><em>Leituras que avançam.</em></h1><p>Descubra livros, acompanhe seu progresso e construa uma biblioteca que é só sua.</p><Link href="/buscar" className="primary-btn">Encontrar um livro <ArrowRight size={18}/></Link></div><div className="book-art"><div className="stack"><div className="book-shape"/><div className="book-shape"/><div className="book-shape"/></div><div className="cup"/></div></section>
- <section className="stats">{([['read','Já li'],['reading','Lendo agora'],['want','Quero ler']] as const).map(([k,label])=><Link className="stat" href={`/biblioteca?status=${k}`} key={k}><strong>{counts[k]}</strong><span>{label}</span></Link>)}</section></div></main>
+export default function ChooseSection() {
+  const [hover, setHover] = useState<'books'|'cinema'|null>(null);
+  return <main className="choose-main">
+    <div className="choose-heading"><span className="eyebrow">Minha Biblioteca · Um lugar para suas histórias</span><h1>Que história vamos explorar <em>hoje?</em></h1><p>Seus livros e seus filmes. Duas coleções independentes, uma mesma conta.</p></div>
+    <section className={`choose-panels ${hover ? `hover-${hover}` : ''}`} onMouseLeave={() => setHover(null)} aria-label="Escolha uma seção">
+      <Link href="/livros" className="choose-panel choose-books" onMouseEnter={() => setHover('books')} onFocus={() => setHover('books')}>
+        <div className="choose-text"><span className="choose-icon"><BookOpen size={25}/></span><span className="choose-kicker">CAPÍTULO UM</span><h2>Livros</h2><p>Descubra autores, acompanhe suas leituras, registre opiniões e encontre a próxima história.</p><span className="choose-link">Entrar na estante <ArrowUpRight size={19}/></span></div><div className="choose-decoration books-decoration" aria-hidden="true"><BookOpen size={180}/></div>
+      </Link>
+      <Link href="/cinema" className="choose-panel choose-cinema" onMouseEnter={() => setHover('cinema')} onFocus={() => setHover('cinema')}>
+        <div className="choose-text"><span className="choose-icon"><Clapperboard size={25}/></span><span className="choose-kicker">CAPÍTULO DOIS</span><h2>Filmes <span>&</span> Séries</h2><p>Explore o cinema, salve o que quer assistir, avalie e compartilhe histórias especiais.</p><span className="choose-link">Entrar no cinema <ArrowUpRight size={19}/></span></div><div className="choose-decoration cinema-decoration" aria-hidden="true"><Clapperboard size={180}/></div>
+      </Link>
+    </section>
+    <p className="choose-footnote"><Sparkles size={16}/> Seu perfil é o mesmo. Suas coleções continuam separadas.</p>
+  </main>;
 }

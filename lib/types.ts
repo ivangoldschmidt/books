@@ -43,4 +43,5 @@ export type LibraryItem = {
   created_at: string;
   updated_at: string;
   finished_at: string | null;
+  private_comment?: string;
 };

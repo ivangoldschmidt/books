@@ -1,109 +1,26 @@
-# Minha Estante v2
+# Minha Biblioteca — livros, filmes e séries
 
-Biblioteca pessoal responsiva em Next.js 15, Supabase, Google Books/Open Library/Gutendex/Internet Archive e recomendações com OpenRouter.
+Aplicação única (Next.js + Supabase) com seleção inicial de seções e navegação contextual. Toda a interface nova está em **português do Brasil**.
 
-## Recursos
-- Login Google e e-mail/senha.
-- Já li, Lendo agora e Quero ler.
-- Categorias personalizadas ilimitadas.
-- Agrupamento automático por autor, gênero, país do autor, idioma, ano, série e editora.
-- Notas de 1 a 5 estrelas, releituras e remoção.
-- Página de autor, histórico, dashboard, perfil e “Minha biblioteca em números”.
-- IA para sugerir os próximos livros.
-- Dark/light e layout desktop/mobile.
+**Para publicar, leia primeiro [GUIA-ATUALIZACAO-V3.md](./GUIA-ATUALIZACAO-V3.md).**
 
-## 1. Supabase
-Crie um projeto e execute **todo** o arquivo `supabase/schema.sql` no SQL Editor. Ele é idempotente e também atualiza uma instalação anterior.
+A atualização usa o **mesmo repositório, a mesma Vercel e o mesmo Supabase**. Execute apenas `supabase/migration-v3-livros-cinema.sql` no banco existente, depois faça upload dos arquivos para o GitHub. Nunca publique seu `.env.local`.
 
-Em Authentication habilite Email e Google. No Google Cloud, a redirect URI deve ser:
-`https://SEU-PROJETO.supabase.co/auth/v1/callback`
+## Funções
 
-No Supabase > Authentication > URL Configuration:
-- Site URL: seu domínio principal da Vercel
-- Redirect URL: `https://seu-dominio.vercel.app/auth/callback`
+**Livros:** busca, adição manual, estante, estados, favoritos, notas, comentários privados, histórico, dashboard, recomendações por IA, compartilhamento entre contas e caixa de recebidos.
 
-## 2. Variáveis na Vercel
-Cadastre em Settings > Environment Variables (Production, Preview e Development):
-```
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-NEXT_PUBLIC_SITE_URL=https://seu-dominio.vercel.app
-GOOGLE_BOOKS_API_KEY=...
-OPENROUTER_API_KEY=sk-or-v1-...
-OPENROUTER_MODEL=openrouter/free
-```
-Crie a chave em OpenRouter e adicione-a somente nas variáveis de ambiente da Vercel. O projeto usa `openrouter/free` por padrão, que encaminha a solicitação a um modelo gratuito disponível. Para fixar outro modelo, altere `OPENROUTER_MODEL` na Vercel, sem modificar o código.
+**Filmes & Séries:** busca TMDB, adição manual, biblioteca, estados Para assistir/Assistindo/Assistido, favoritos, notas, comentários privados, dashboard, informações sobre direção/criação, elenco, sinopse e temporadas, análise e recomendações por IA, compartilhamento entre contas e recebidos.
 
-## 3. GitHub/Vercel
-Envie o conteúdo da pasta para um repositório, importe na Vercel e faça Deploy. Depois de alterar variáveis, faça Redeploy sem cache.
+A interface muda a navegação no cabeçalho conforme a seção selecionada. Livros permanecem em `library_items`, mídia em `media_library_items`.
 
-## Observações de dados
-As APIs nem sempre fornecem país do autor, gênero, série ou editora. Nesses casos o agrupamento usa “Não informado”. Novos livros pesquisados pelo Google Books costumam possuir metadados mais completos.
+## Desenvolvimento local
 
-## Local
-```
-npm install
+```sh
+npm ci
+cp .env.example .env.local
+# Defina as variáveis indicadas em .env.local
 npm run dev
-npm run build
 ```
 
-## Atualização: favoritos e remoção de categorias
-
-Depois de atualizar os arquivos, execute novamente `supabase/schema.sql` no SQL Editor do Supabase. O script adiciona a coluna `is_favorite` sem apagar os livros existentes.
-
-- Favoritos fica sempre visível na biblioteca.
-- Clique no coração da capa para adicionar ou remover um livro dos favoritos.
-- As categorias criadas ficam visíveis como botões.
-- Clique no `×` da categoria para excluí-la. A exclusão da categoria não remove os livros.
-
-## Atualização desta versão
-
-- A busca mantém o botão `+` com o menu de estantes.
-- A página do livro mostra diretamente `Já li`, `Lendo agora` e `Quero ler`.
-- A quantidade de leituras é digitada na página do livro.
-- A prévia incorporada foi removida.
-- A IA permite recomendação geral, por autores, por livros selecionados ou por pedido livre.
-- Livros que não existem nas APIs podem ser cadastrados em `/adicionar-manualmente`.
-- Não é necessária nenhuma alteração adicional no banco para estes recursos.
-
-## Library of Congress e tradução sob demanda
-
-A busca também consulta a API pública da Library of Congress, sem chave adicional.
-
-A tradução nunca é automática. Na página do livro, use **Traduzir e completar em português**. Essa ação usa a OpenRouter para:
-
-- traduzir título, descrição, gêneros, idioma, país e série;
-- preservar nomes próprios, autores, editoras e instituições;
-- preencher campos bibliográficos ausentes quando houver segurança;
-- substituir descrições genéricas ou inválidas da Open Library;
-- salvar os dados traduzidos na Estante quando o livro já estiver adicionado.
-
-Variáveis necessárias:
-
-```env
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=openrouter/free
-```
-
----
-
-## Nova seção: Filmes & Séries (mesmo repositório)
-
-A seção de cinema está integrada ao mesmo projeto Next.js, através da entrada **Filmes & Séries** no menu. A estante de livros continua a usar `library_items`; a seção nova usa tabelas independentes (`media_library_items` e `media_shares`) e não migra nem modifica os livros já guardados.
-
-### Ativar a seção
-
-1. No projeto Supabase que já utiliza a Minha Estante, abra **SQL Editor** e execute o ficheiro `supabase/cinema-schema.sql`. Este script só cria/atualiza as tabelas da seção de cinema; não substitua o `supabase/schema.sql` existente.
-2. Crie um token TMDB em https://www.themoviedb.org/settings/api e adicione a variável `TMDB_API_READ_ACCESS_TOKEN` nas variáveis do projeto (localmente em `.env.local`, e na Vercel em Settings → Environment Variables). O token é usado apenas no servidor e não deve ter prefixo `NEXT_PUBLIC_`.
-3. Reinicie o servidor local ou faça Redeploy na Vercel. A seção ficará disponível em `/cinema`.
-4. Entre com cada uma das duas contas existentes. Para partilhar um título, use **Partilhar** e introduza o e-mail da outra conta.
-
-### O que a seção inclui
-
-- Pesquisa de filmes e séries via TMDB (`/cinema/pesquisar`).
-- Listas privadas Para assistir, Assistidos e Favoritos (`/cinema/biblioteca`).
-- Nota pessoal de 1 a 10 e comentário privado por título. As políticas RLS restringem cada registo ao seu dono.
-- Partilha com a outra conta pelo e-mail e caixa de entrada (`/cinema/partilhados`). O título partilhado é um snapshot separado; o comentário privado de quem enviou nunca é copiado.
-- Tabelas e rotas novas, sem reutilizar as tabelas dos livros.
-
-O TMDB fornece dados de filmes e séries; o produto não é aprovado nem certificado pelo TMDB. A utilização deve respeitar os termos e requisitos de atribuição do serviço.
+A IA depende de chave OpenRouter válida no servidor. A API de cinema utiliza o TMDB e suas condições de uso e atribuição.

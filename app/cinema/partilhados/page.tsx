@@ -17,7 +17,7 @@ export default function SharedCinemaPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { location.href = '/login'; return; }
     const { data, error: queryError } = await supabase.from('media_shares').select('*').eq('recipient_id', user.id).order('created_at', { ascending: false });
-    if (queryError) setError(queryError.message.includes('media_shares') || queryError.message.includes('schema cache') ? 'As partilhas ainda não estão configuradas. Executa supabase/cinema-schema.sql no Supabase.' : queryError.message);
+    if (queryError) setError(queryError.message.includes('media_shares') || queryError.message.includes('schema cache') ? 'Os compartilhamentos ainda não estão configurados. Execute supabase/cinema-schema.sql no Supabase.' : queryError.message);
     setShares((data || []) as MediaShare[]);
     setLoading(false);
   }
@@ -48,15 +48,15 @@ export default function SharedCinemaPage() {
   }
 
   return <main className="container section cinema-page">
-    <div className="cinema-page-heading"><div><div className="eyebrow">Descobertas a dois</div><h1>Partilhados comigo</h1><p className="lead">Títulos que a outra conta te enviou. Adicioná-los aqui cria a tua própria entrada privada na biblioteca.</p></div><Link href="/cinema/pesquisar" className="cinema-button"><SearchIcon/> Pesquisar</Link></div>
+    <div className="cinema-page-heading"><div><div className="eyebrow">Descobertas a dois</div><h1>Compartilhados comigo</h1><p className="lead">Títulos que a outra conta enviou para você. Adicionar aqui cria sua própria entrada privada na biblioteca.</p></div><Link href="/cinema/pesquisar" className="cinema-button"><SearchIcon/> Pesquisar</Link></div>
     {error && <div className="cinema-alert error">{error}</div>}
-    {loading ? <div className="empty">A carregar partilhas…</div> : shares.length ? <div className="cinema-shares-list">{shares.map(share => {
+    {loading ? <div className="empty">Carregando compartilhamentos…</div> : shares.length ? <div className="cinema-shares-list">{shares.map(share => {
       const media = share.media;
       return <article className={`cinema-share-card ${share.status !== 'pending' ? 'processed' : ''}`} key={share.id}>
-        <div className="cinema-share-poster">{media.posterUrl ? <img src={media.posterUrl} alt={`Cartaz de ${media.title}`} loading="lazy"/> : <Clapperboard size={30}/>}</div>
-        <div className="cinema-share-info"><div className="cinema-card-kicker">{media.mediaType === 'tv' ? 'Série' : 'Filme'}{media.year ? ` · ${media.year}` : ''}</div><h3>{media.title}</h3><p>{share.message ? `“${share.message}”` : 'A outra conta partilhou este título contigo.'}</p><small>Recebido em {new Date(share.created_at).toLocaleDateString('pt-PT')}</small><div className="cinema-share-actions">{share.status === 'pending' ? <><button className="cinema-button primary" disabled={busy===share.id} onClick={()=>void addToLibrary(share)}>{busy===share.id?'A guardar…':<><Plus size={16}/> Adicionar à minha lista</>}</button><button className="cinema-button" disabled={busy===share.id} onClick={()=>void dismiss(share)}>Dispensar</button></> : <span className={`cinema-status ${share.status==='added'?'watched':'want'}`}>{share.status==='added'?<><Check size={14}/> Adicionado à biblioteca</>:'Partilha dispensada'}</span>}</div></div>
+        <div className="cinema-share-poster">{media.posterUrl ? <img src={media.posterUrl} alt={`Pôster de ${media.title}`} loading="lazy"/> : <Clapperboard size={30}/>}</div>
+        <div className="cinema-share-info"><div className="cinema-card-kicker">{media.mediaType === 'tv' ? 'Série' : 'Filme'}{media.year ? ` · ${media.year}` : ''}</div><h3>{media.title}</h3><p>{share.message ? `“${share.message}”` : 'A outra conta compartilhou este título com você.'}</p><small>Recebido em {new Date(share.created_at).toLocaleDateString('pt-BR')}</small><div className="cinema-share-actions">{share.status === 'pending' ? <><button className="cinema-button primary" disabled={busy===share.id} onClick={()=>void addToLibrary(share)}>{busy===share.id?'Salvando…':<><Plus size={16}/> Adicionar à minha lista</>}</button><button className="cinema-button" disabled={busy===share.id} onClick={()=>void dismiss(share)}>Dispensar</button></> : <span className={`cinema-status ${share.status==='added'?'watched':'want'}`}>{share.status==='added'?<><Check size={14}/> Adicionado à biblioteca</>:'Compartilhamento descartado'}</span>}</div></div>
       </article>;
-    })}</div> : <div className="empty cinema-empty"><Inbox size={36}/><h3>Ainda não recebeste títulos</h3><p>Quando a outra conta te enviar um filme ou série, aparecerá aqui.</p><Link className="cinema-button primary" href="/cinema/pesquisar"><Send size={16}/> Explorar títulos</Link></div>}
+    })}</div> : <div className="empty cinema-empty"><Inbox size={36}/><h3>Você ainda não recebeu títulos</h3><p>Quando a outra conta te enviar um filme ou série, aparecerá aqui.</p><Link className="cinema-button primary" href="/cinema/pesquisar"><Send size={16}/> Explorar títulos</Link></div>}
   </main>;
 }
 

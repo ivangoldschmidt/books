@@ -40,34 +40,34 @@ export default function CinemaHome() {
   return <main className="container section cinema-page">
     <section className="cinema-hero">
       <div className="cinema-hero-copy">
-        <div className="eyebrow">Uma nova secção · A mesma conta</div>
-        <h1>Filmes e séries.<br/><em>À tua maneira.</em></h1>
-        <p>Descobre títulos, organiza o que queres ver, guarda as tuas opiniões em privado e partilha descobertas com a outra conta da casa.</p>
+        <div className="eyebrow">Uma nova seção · A mesma conta</div>
+        <h1>Filmes e séries.<br/><em>Do seu jeito.</em></h1>
+        <p>Descubra títulos, organize o que quer assistir, salve suas opiniões de forma privada e compartilhe descobertas com a outra conta da casa.</p>
         <div className="cinema-hero-actions">
           <Link href="/cinema/pesquisar" className="cinema-button primary"><Search size={17}/> Pesquisar títulos</Link>
-          <Link href="/cinema/biblioteca" className="cinema-button"><Clapperboard size={17}/> A minha coleção</Link>
+          <Link href="/cinema/biblioteca" className="cinema-button"><Clapperboard size={17}/> Minha coleção</Link>
         </div>
-        <div className="cinema-private-note"><CheckCircle2 size={16}/> Os livros continuam na sua própria secção, sem misturar dados.</div>
+        <div className="cinema-private-note"><CheckCircle2 size={16}/> Os livros continuam na sua própria seção, sem misturar dados.</div>
       </div>
-      <div className="cinema-hero-art" aria-hidden="true"><div className="cinema-orbit orbit-one"/><div className="cinema-orbit orbit-two"/><div className="cinema-film-icon"><Clapperboard size={70}/></div><span className="cinema-art-caption">YOUR PRIVATE WATCHLIST</span></div>
+      <div className="cinema-hero-art" aria-hidden="true"><div className="cinema-orbit orbit-one"/><div className="cinema-orbit orbit-two"/><div className="cinema-film-icon"><Clapperboard size={70}/></div><span className="cinema-art-caption">SUA LISTA PARTICULAR</span></div>
     </section>
 
     <section className="cinema-stat-grid" aria-label="Resumo da biblioteca de filmes e séries">
       <Link className="cinema-stat" href="/cinema/biblioteca?status=want"><span><Clapperboard size={18}/> Para assistir</span><strong>{loading ? '—' : want}</strong></Link>
       <Link className="cinema-stat" href="/cinema/biblioteca?status=watched"><span><CheckCircle2 size={18}/> Assistidos</span><strong>{loading ? '—' : watched}</strong></Link>
       <Link className="cinema-stat" href="/cinema/biblioteca?view=favorites"><span><Heart size={18}/> Favoritos</span><strong>{loading ? '—' : favorites}</strong></Link>
-      <Link className="cinema-stat" href="/cinema/partilhados"><span><Inbox size={18}/> Partilhados</span><strong>{loading ? '—' : incoming}</strong></Link>
+      <Link className="cinema-stat" href="/cinema/partilhados"><span><Inbox size={18}/> Compartilhados</span><strong>{loading ? '—' : incoming}</strong></Link>
     </section>
     {error && <p className="form-error">{error}. Se as tabelas de cinema ainda não existem, execute `supabase/cinema-schema.sql` no Supabase.</p>}
 
-    <section className="cinema-section-head"><div><div className="eyebrow">Separado dos livros</div><h2>O teu espaço de cinema</h2></div><Link className="cinema-text-link" href="/cinema/biblioteca">Abrir biblioteca <ArrowRight size={16}/></Link></section>
+    <section className="cinema-section-head"><div><div className="eyebrow">Separado dos livros</div><h2>Seu espaço de cinema</h2></div><Link className="cinema-text-link" href="/cinema/biblioteca">Abrir biblioteca <ArrowRight size={16}/></Link></section>
     <div className="cinema-feature-grid">
-      <Link href="/cinema/pesquisar" className="cinema-feature-card"><div className="cinema-feature-icon"><Search size={23}/></div><div><h3>Encontrar algo para ver</h3><p>Pesquisa filmes e séries através do TMDB, com cartazes, sinopses e avaliações.</p><span>Pesquisar agora <ArrowRight size={15}/></span></div></Link>
-      <Link href="/cinema/biblioteca" className="cinema-feature-card"><div className="cinema-feature-icon"><Film size={23}/></div><div><h3>Organizar a coleção</h3><p>Marca o que queres assistir, o que já viste e os títulos de que mais gostaste.</p><span>{movies} filmes · {shows} séries <ArrowRight size={15}/></span></div></Link>
-      <Link href="/cinema/partilhados" className="cinema-feature-card"><div className="cinema-feature-icon"><Tv size={23}/></div><div><h3>Escolher em conjunto</h3><p>Envia um filme à outra conta com uma mensagem curta. As notas privadas não são partilhadas.</p><span>Ver partilhas <ArrowRight size={15}/></span></div></Link>
+      <Link href="/cinema/pesquisar" className="cinema-feature-card"><div className="cinema-feature-icon"><Search size={23}/></div><div><h3>Encontrar algo para assistir</h3><p>Pesquise filmes e séries pelo TMDB, com pôsteres, sinopses e avaliações.</p><span>Pesquisar agora <ArrowRight size={15}/></span></div></Link>
+      <Link href="/cinema/biblioteca" className="cinema-feature-card"><div className="cinema-feature-icon"><Film size={23}/></div><div><h3>Organizar a coleção</h3><p>Marque o que quer assistir, o que já viu e seus títulos favoritos.</p><span>{movies} filmes · {shows} séries <ArrowRight size={15}/></span></div></Link>
+      <Link href="/cinema/partilhados" className="cinema-feature-card"><div className="cinema-feature-icon"><Tv size={23}/></div><div><h3>Escolher em conjunto</h3><p>Envie um filme ou uma série para a outra conta com uma mensagem. Os comentários privados não são compartilhados.</p><span>Ver compartilhamentos <ArrowRight size={15}/></span></div></Link>
     </div>
 
-    <section className="cinema-section-head"><div><div className="eyebrow">Adicionados recentemente</div><h2>A tua estante de cinema</h2></div></section>
-    {loading ? <div className="empty">A carregar a coleção…</div> : items.length ? <div className="cinema-poster-strip">{items.slice(0, 7).map(item => <Link href="/cinema/biblioteca" key={item.id} className="cinema-mini-poster">{item.media?.posterUrl ? <img src={item.media.posterUrl} alt={`Cartaz de ${item.media.title}`} loading="lazy"/> : <span><Clapperboard size={24}/>{item.media?.title}</span>}<strong>{item.media?.title}</strong><small>{item.status === 'watched' ? 'Assistido' : 'Para assistir'}</small></Link>)}</div> : <div className="empty cinema-empty"><Clapperboard size={34}/><h3>A tua coleção de filmes começa aqui</h3><p>Pesquisa o primeiro título e adiciona-o à lista para assistir.</p><Link className="cinema-button primary" href="/cinema/pesquisar">Explorar filmes e séries</Link></div>}
+    <section className="cinema-section-head"><div><div className="eyebrow">Adicionados recentemente</div><h2>Sua estante de cinema</h2></div></section>
+    {loading ? <div className="empty">Carregando a coleção…</div> : items.length ? <div className="cinema-poster-strip">{items.slice(0, 7).map(item => <Link href={`/cinema/detalhes/${item.media_type}/${item.tmdb_id}`} key={item.id} className="cinema-mini-poster">{item.media?.posterUrl ? <img src={item.media.posterUrl} alt={`Pôster de ${item.media.title}`} loading="lazy"/> : <span><Clapperboard size={24}/>{item.media?.title}</span>}<strong>{item.media?.title}</strong><small>{item.status === 'watched' ? 'Assistido' : item.status==='watching' ? 'Assistindo' : 'Para assistir'}</small></Link>)}</div> : <div className="empty cinema-empty"><Clapperboard size={34}/><h3>Sua coleção de filmes começa aqui</h3><p>Pesquise seu primeiro título e adicione à lista Para assistir.</p><Link className="cinema-button primary" href="/cinema/pesquisar">Explorar filmes e séries</Link></div>}
   </main>;
 }

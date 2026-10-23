@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { BarChart3, BookPlus, Home, Library, LogIn, LogOut, Menu, Moon, Search, Sparkles, Sun, X } from 'lucide-react';
+import { BarChart3, BookPlus, Clapperboard, Home, Library, LogIn, LogOut, Menu, Moon, Search, Sparkles, Sun, X } from 'lucide-react';
 import { useEffect,useState } from 'react';
 import {createClient} from '@/lib/supabase-browser';
 
@@ -11,6 +11,7 @@ const links=[
   {href:'/biblioteca',label:'Estante',icon:Library},
   {href:'/dashboard',label:'Dashboard',icon:BarChart3},
   {href:'/recomendacoes',label:'IA',icon:Sparkles},
+  {href:'/cinema',label:'Filmes & Séries',icon:Clapperboard},
 ];
 export function Header(){
   const[dark,setDark]=useState(false);const[profile,setProfile]=useState<Profile|null>(null);const[open,setOpen]=useState(false);

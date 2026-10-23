@@ -84,3 +84,26 @@ Variáveis necessárias:
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL=openrouter/free
 ```
+
+---
+
+## Nova seção: Filmes & Séries (mesmo repositório)
+
+A seção de cinema está integrada ao mesmo projeto Next.js, através da entrada **Filmes & Séries** no menu. A estante de livros continua a usar `library_items`; a seção nova usa tabelas independentes (`media_library_items` e `media_shares`) e não migra nem modifica os livros já guardados.
+
+### Ativar a seção
+
+1. No projeto Supabase que já utiliza a Minha Estante, abra **SQL Editor** e execute o ficheiro `supabase/cinema-schema.sql`. Este script só cria/atualiza as tabelas da seção de cinema; não substitua o `supabase/schema.sql` existente.
+2. Crie um token TMDB em https://www.themoviedb.org/settings/api e adicione a variável `TMDB_API_READ_ACCESS_TOKEN` nas variáveis do projeto (localmente em `.env.local`, e na Vercel em Settings → Environment Variables). O token é usado apenas no servidor e não deve ter prefixo `NEXT_PUBLIC_`.
+3. Reinicie o servidor local ou faça Redeploy na Vercel. A seção ficará disponível em `/cinema`.
+4. Entre com cada uma das duas contas existentes. Para partilhar um título, use **Partilhar** e introduza o e-mail da outra conta.
+
+### O que a seção inclui
+
+- Pesquisa de filmes e séries via TMDB (`/cinema/pesquisar`).
+- Listas privadas Para assistir, Assistidos e Favoritos (`/cinema/biblioteca`).
+- Nota pessoal de 1 a 10 e comentário privado por título. As políticas RLS restringem cada registo ao seu dono.
+- Partilha com a outra conta pelo e-mail e caixa de entrada (`/cinema/partilhados`). O título partilhado é um snapshot separado; o comentário privado de quem enviou nunca é copiado.
+- Tabelas e rotas novas, sem reutilizar as tabelas dos livros.
+
+O TMDB fornece dados de filmes e séries; o produto não é aprovado nem certificado pelo TMDB. A utilização deve respeitar os termos e requisitos de atribuição do serviço.

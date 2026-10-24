@@ -1,0 +1,15 @@
+'use client';
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+import {Clapperboard,RefreshCw,Sparkles,Star} from 'lucide-react';
+import type {MediaRecord} from '@/lib/media-types';
+
+type Suggested=MediaRecord & {matchCount:number};
+export function CinemaTmdbSuggestions({scope,listId}:{scope:'personal'|'shared';listId?:string}){
+ const [items,setItems]=useState<Suggested[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState(''),[type,setType]=useState('all');
+ useEffect(()=>{let current=true;async function load(){if(scope==='shared'&&!listId){setItems([]);return}setBusy(true);setError('');try{const params=new URLSearchParams({scope,type});if(listId)params.set('listId',listId);const response=await fetch(`/api/cinema/tmdb-suggestions?${params}`,{cache:'no-store'});const data=await response.json();if(!response.ok)throw Error(data.error||'Não foi possível carregar recomendações.');if(current){setItems(data.results||[]);setMessage(data.message||'');}}catch(e){if(current)setError(e instanceof Error?e.message:'Erro ao consultar recomendações.')}finally{if(current)setBusy(false)}}void load();return()=>{current=false}},[scope,listId,type]);
+ return <section className="cinema-suggestions-section" aria-label="Recomendações do TMDB"><div className="cinema-suggestions-head"><div><div className="eyebrow"><Sparkles size={15}/> Sugestões do TMDB</div><h2>{scope==='shared'?'Para vocês descobrirem juntos':'Recomendados para você'}</h2><p className="muted">Títulos semelhantes aos da {scope==='shared'?'lista compartilhada':'sua coleção'}, sem repetir o que já está nela.</p></div><select aria-label="Filtrar recomendações" value={type} onChange={e=>setType(e.target.value)} className="cinema-type-select"><option value="all">Filmes e séries</option><option value="movie">Filmes</option><option value="tv">Séries</option></select></div>
+ {busy&&<p className="muted"><RefreshCw size={15} className="spin"/> Buscando sugestões…</p>}{error&&<p className="cinema-alert error">{error}</p>}{!busy&&!error&&!items.length&&<p className="cinema-alert">{message||'Nenhuma sugestão encontrada para os títulos atuais.'}</p>}
+ {!!items.length&&<div className="cinema-suggestions-grid">{items.map(item=><Link className="cinema-suggestion" href={`/cinema/detalhes/${item.mediaType}/${item.id}`} key={`${item.mediaType}:${item.id}`}><div className="cinema-suggestion-art">{item.posterUrl?<img src={item.posterUrl} alt={`Pôster de ${item.title}`} loading="lazy"/>:<Clapperboard size={32}/>}</div><div className="cinema-suggestion-body"><span className="cinema-card-kicker">{item.mediaType==='tv'?'Série':'Filme'} · {item.year||'—'}</span><strong>{item.title}</strong><small><Star size={13}/> {typeof item.voteAverage==='number'?item.voteAverage.toFixed(1):'Sem nota'} TMDB</small><span className="cinema-suggestion-cta">Ver detalhes →</span></div></Link>)}</div>}
+ <p className="cinema-attribution">Fonte: TMDB (endpoints de títulos semelhantes e recomendações). As sugestões são calculadas a partir da biblioteca selecionada; não são avaliações da IA.</p></section>;
+}

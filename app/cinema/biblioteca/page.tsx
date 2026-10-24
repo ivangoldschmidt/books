@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Clapperboard, Heart, Search } from 'lucide-react';
 import { CinemaMediaCard } from '@/components/CinemaMediaCard';
+import { CinemaTmdbSuggestions } from '@/components/CinemaTmdbSuggestions';
 import { createClient } from '@/lib/supabase-browser';
 import type { MediaLibraryItem, MediaRecord, MediaStatus } from '@/lib/media-types';
 
@@ -77,6 +78,7 @@ export default function CinemaLibraryPage() {
     </div>
     {error && <div className="cinema-alert error">{error}</div>}
     {loading ? <div className="empty">Carregando a sua biblioteca…</div> : visible.length ? <div className="cinema-library-grid">{visible.map(item=><CinemaMediaCard key={item.id} item={item} onPatch={patch} onDelete={remove} onShare={share}/>)}</div> : <div className="empty cinema-empty"><Clapperboard size={34}/><h3>Nenhum título neste filtro</h3><p>Pesquisa o seu primeiro filme ou série, ou muda o filtro acima.</p><Link className="cinema-button primary" href="/cinema/pesquisar">Pesquisar títulos</Link></div>}
+    {!loading && <CinemaTmdbSuggestions scope="personal"/>}
     <p className="cinema-attribution">Os comentários privados são salvos na sua conta e não são incluídos quando compartilha um título.</p>
   </main>;
 }

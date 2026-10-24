@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { CinemaTopTen } from '@/components/CinemaTopTen';
 import { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Clapperboard, Film, Heart, Inbox, Search, Tv } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
@@ -46,6 +47,7 @@ export default function CinemaHome() {
         <div className="cinema-hero-actions">
           <Link href="/cinema/pesquisar" className="cinema-button primary"><Search size={17}/> Pesquisar títulos</Link>
           <Link href="/cinema/biblioteca" className="cinema-button"><Clapperboard size={17}/> Minha coleção</Link>
+          <Link href="/cinema/compartilhada" className="cinema-button secondary-accent">Biblioteca compartilhada</Link>
         </div>
         <div className="cinema-private-note"><CheckCircle2 size={16}/> Os livros continuam na sua própria seção, sem misturar dados.</div>
       </div>
@@ -67,6 +69,7 @@ export default function CinemaHome() {
       <Link href="/cinema/partilhados" className="cinema-feature-card"><div className="cinema-feature-icon"><Tv size={23}/></div><div><h3>Escolher em conjunto</h3><p>Envie um filme ou uma série para a outra conta com uma mensagem. Os comentários privados não são compartilhados.</p><span>Ver compartilhamentos <ArrowRight size={15}/></span></div></Link>
     </div>
 
+    <CinemaTopTen/>
     <section className="cinema-section-head"><div><div className="eyebrow">Adicionados recentemente</div><h2>Sua estante de cinema</h2></div></section>
     {loading ? <div className="empty">Carregando a coleção…</div> : items.length ? <div className="cinema-poster-strip">{items.slice(0, 7).map(item => <Link href={`/cinema/detalhes/${item.media_type}/${item.tmdb_id}`} key={item.id} className="cinema-mini-poster">{item.media?.posterUrl ? <img src={item.media.posterUrl} alt={`Pôster de ${item.media.title}`} loading="lazy"/> : <span><Clapperboard size={24}/>{item.media?.title}</span>}<strong>{item.media?.title}</strong><small>{item.status === 'watched' ? 'Assistido' : item.status==='watching' ? 'Assistindo' : 'Para assistir'}</small></Link>)}</div> : <div className="empty cinema-empty"><Clapperboard size={34}/><h3>Sua coleção de filmes começa aqui</h3><p>Pesquise seu primeiro título e adicione à lista Para assistir.</p><Link className="cinema-button primary" href="/cinema/pesquisar">Explorar filmes e séries</Link></div>}
   </main>;

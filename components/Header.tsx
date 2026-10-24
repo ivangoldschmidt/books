@@ -21,6 +21,7 @@ const cinemaLinks = [
   {href:'/cinema/dashboard',label:'Dashboard',icon:BarChart3},
   {href:'/cinema/ia',label:'IA',icon:Sparkles},
   {href:'/cinema/partilhados',label:'Recebidos',icon:Inbox},
+  {href:'/cinema/compartilhada',label:'Em conjunto',icon:Library},
 ];
 export function Header() {
   const pathname = usePathname();

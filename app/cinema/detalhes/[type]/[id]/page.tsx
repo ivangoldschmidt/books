@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { CinemaWatchProviders } from '@/components/CinemaWatchProviders';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Check, Clapperboard, Heart, RefreshCw, Send, Sparkles, Star, Trash2 } from 'lucide-react';
@@ -53,7 +54,7 @@ export default function MediaDetailsPage() {
         <h2>Sinopse</h2><p className="cinema-overview media-synopsis">{text}</p>
         {media.aiAnalysis&&<section className="media-ai-insight"><h3><Sparkles size={17}/> Análise com IA · Sem spoilers</h3><p>{media.aiAnalysis}</p><small>Interpretação gerada por IA a partir dos metadados. Verifique dados importantes na fonte.</small></section>}
         <button className="cinema-button" onClick={()=>void enrich()} disabled={aiBusy}><RefreshCw size={16} className={aiBusy?'spin':''}/>{aiBusy?'Analisando…':media.aiEnriched?'Analisar novamente com IA':'Traduzir e analisar com IA'}</button>
-        <div className="media-facts">
+        <CinemaWatchProviders type={media.mediaType} id={media.id}/><div className="media-facts">
           <div><span>{media.mediaType==='movie'?'Direção':'Criado por'}</span><strong>{media.mediaType==='movie'?media.director||'Não informado':media.creators?.join(', ')||'Não informado'}</strong></div>
           <div><span>Elenco principal</span><strong>{media.cast?.slice(0,6).join(', ')||'Não informado'}</strong></div>
           <div><span>Data de lançamento</span><strong>{media.releaseDate||'Não informado'}</strong></div>
